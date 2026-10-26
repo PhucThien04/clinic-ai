@@ -1,0 +1,28 @@
+### 1. Kiểm tra Server hoạt động
+GET http://localhost:5000/
+
+### ==========================================
+
+### 2. Test Đăng ký tài khoản (Register)
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "TenTaiKhoan": "patient_thien",
+  "MatKhau": "123456",
+  "HoTen": "Nguyễn Phúc Thiên",
+  "CCCD": "123456789012",
+  "SoDienThoai": "0905123456",
+  "VaiTro": "Bệnh nhân"
+}
+
+### ==========================================
+
+### 3. Test Đăng nhập (Login)
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "TenTaiKhoan": "patient_thien",
+  "MatKhau": "123456"
+}

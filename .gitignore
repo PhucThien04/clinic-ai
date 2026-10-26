@@ -1,0 +1,14 @@
+# Environment variables (Bảo mật thông tin DB và JWT_SECRET)
+.env
+**/ .env
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build & Logs
+dist/
+build/
+npm-debug.log*
+.DS_Store
+Thumbs.db
