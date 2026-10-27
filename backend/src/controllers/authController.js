@@ -89,8 +89,19 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Vui lòng nhập tên tài khoản và mật khẩu!' });
     }
 
-    // Tìm tài khoản theo TenTaiKhoan
-    const result = await pool.query('SELECT * FROM TAIKHOAN WHERE TenTaiKhoan = $1', [TenTaiKhoan]);
+    // Tìm tài khoản và dùng AS với dấu ngoặc kép để giữ nguyên định dạng tên cột
+    const result = await pool.query(
+      `SELECT 
+        IdTaiKhoan AS "IdTaiKhoan", 
+        TenTaiKhoan AS "TenTaiKhoan", 
+        MatKhau AS "MatKhau", 
+        HoTen AS "HoTen", 
+        VaiTro AS "VaiTro", 
+        Email AS "Email" 
+      FROM TAIKHOAN 
+      WHERE TenTaiKhoan = $1`, 
+      [TenTaiKhoan]
+    );
     
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Tên tài khoản hoặc mật khẩu không chính xác!' });
@@ -98,7 +109,7 @@ exports.login = async (req, res) => {
 
     const user = result.rows[0];
 
-    // So sánh mật khẩu đã hash[cite: 19]
+    // So sánh mật khẩu đã hash
     const isMatch = await bcrypt.compare(MatKhau, user.MatKhau);
     if (!isMatch) {
       return res.status(401).json({ error: 'Tên tài khoản hoặc mật khẩu không chính xác!' });
