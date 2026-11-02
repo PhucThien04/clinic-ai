@@ -1,12 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-// Hàm sinh mã ID tự động ngẫu nhiên (ví dụ: TK + 8 số ngẫu nhiên)
-const generateIdTaiKhoan = () => {
-  const randomNum = Math.floor(10000000 + Math.random() * 90000000);
-  return `TK${randomNum}`;
-};
+const { generateId } = require('../utils/idGenerator');
 
 // 1. Đăng ký tài khoản
 exports.register = async (req, res) => {
@@ -39,13 +34,13 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'Tên tài khoản, CCCD hoặc Số điện thoại đã tồn tại trong hệ thống!' });
     }
 
-    // Hash mật khẩu theo quy tắc bảo mật[cite: 19]
+    // Hash mật khẩu theo quy tắc bảo mật
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(MatKhau, saltRounds);
-    const idTaiKhoan = generateIdTaiKhoan();
+    const idTaiKhoan = generateId('TK'); // Sử dụng helper chuẩn 13 ký tự
     const trangThai = 'Hoạt động';
 
-    // Thêm mới vào bảng TAIKHOAN[cite: 18]
+    // Thêm mới vào bảng TAIKHOAN
     const query = `
       INSERT INTO TAIKHOAN (IdTaiKhoan, TenTaiKhoan, MatKhau, HoTen, CCCD, NgaySinh, GioiTinh, Email, SoDienThoai, DiaChi, TrangThai, VaiTro)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
