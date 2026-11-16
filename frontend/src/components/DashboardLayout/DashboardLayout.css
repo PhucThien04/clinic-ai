@@ -1,0 +1,134 @@
+.dashboard-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.dashboard-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sidebar-logo-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-logo-icon {
+  background: linear-gradient(135deg, #0284c7, #0d9488);
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+}
+
+.sidebar-logo-text {
+  font-weight: 800;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.sidebar-nav {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.sidebar-link-default {
+  color: #64748b;
+  background: transparent;
+}
+
+.sidebar-link-active {
+  color: #0284c7;
+  background: #e0f2fe;
+}
+
+.sidebar-link-doctor-active {
+  color: #0d9488;
+  background: #ccfbf1;
+}
+
+.sidebar-section-title {
+  margin: 15px 0 5px 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.sidebar-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  text-decoration: none;
+}
+
+.sidebar-avatar {
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-profile-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.sidebar-profile-desc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.sidebar-btn-logout {
+  width: 100%;
+  background: #fee2e2;
+  color: #ef4444;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.dashboard-main {
+  flex: 1;
+  min-width: 0;
+  padding: 30px 40px;
+}

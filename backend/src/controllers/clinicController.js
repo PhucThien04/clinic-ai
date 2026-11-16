@@ -115,3 +115,25 @@ exports.getServices = async (req, res) => {
     return res.status(500).json({ error: 'Lỗi server nội bộ.' });
   }
 };
+
+// 5. Lấy danh sách sự kiện của phòng khám
+exports.getEvents = async (req, res) => {
+  try {
+    const { idPhongKham } = req.query;
+    let query = `SELECT * FROM SUKIEN WHERE 1=1`;
+    const values = [];
+
+    if (idPhongKham) {
+      values.push(idPhongKham);
+      query += ` AND IdPhongKham = $1`;
+    }
+
+    query += ` ORDER BY ThoiGianBatDau DESC`;
+
+    const result = await pool.query(query, values);
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Lỗi khi lấy danh sách sự kiện:', err);
+    return res.status(500).json({ error: 'Lỗi server nội bộ.' });
+  }
+};

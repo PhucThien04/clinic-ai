@@ -97,3 +97,40 @@ exports.updateDoctorDiagnosis = async (req, res) => {
     return res.status(500).json({ error: 'Lỗi server nội bộ.' });
   }
 };
+
+// Hàm lấy thông tin hồ sơ cho Bác sĩ
+exports.getPatientExamInfo = async (req, res) => {
+  try {
+    const { idHoSoBenhNhan } = req.params;
+
+    const query = `
+      SELECT 
+        IdHoSoBenhNhan,
+        NhietDo,
+        HuyetApTamThu,
+        HuyetApTamTruong,
+        NhipTim,
+        NhipTho,
+        CanNang,
+        ChieuCao,
+        TrieuChung,
+        MucDo,
+        GhiChu,
+        ChuanDoan,
+        KetLuan
+      FROM HOSOBENHNHAN
+      WHERE IdHoSoBenhNhan = $1
+    `;
+    
+    const result = await pool.query(query, [idHoSoBenhNhan]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy hồ sơ bệnh nhân!' });
+    }
+
+    return res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Lỗi khi lấy thông tin khám:', err);
+    return res.status(500).json({ error: 'Lỗi server nội bộ' });
+  }
+};

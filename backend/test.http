@@ -30,8 +30,9 @@ POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
-  "TenTaiKhoan": "phuc_thien",
-  "MatKhau": "123456"
+  "TenTaiKhoan": "nurse_mai",
+  "MatKhau": "123456
+  "
 }
 
 

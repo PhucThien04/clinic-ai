@@ -1,0 +1,154 @@
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.top-bar {
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 6px 24px;
+}
+.top-bar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.top-bar-left {
+  display: flex;
+  gap: 20px;
+}
+.top-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.main-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+}
+.main-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logo-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  background: linear-gradient(135deg, #0284c7, #0d9488);
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+}
+.logo-text-1 {
+  font-weight: 800;
+  font-size: 18px;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+.logo-text-2 {
+  font-weight: 800;
+  font-size: 18px;
+  color: #0284c7;
+}
+.nav-menu {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.nav-link {
+  border: none;
+}
+.nav-link-nurse {
+  border-color: #0284c7;
+  color: #0284c7;
+}
+.nav-link-doctor {
+  border-color: #0d9488;
+  color: #0d9488;
+}
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid #e2e8f0;
+}
+.user-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.user-profile-link:hover {
+  background: #e2e8f0;
+}
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+.btn-logout {
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+.login-menu {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+}
+.main-content {
+  flex: 1;
+  padding: 40px 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+.main-footer {
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 40px 24px 20px 24px;
+  border-top: 1px solid #1e293b;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+.footer-title {
+  color: white;
+  margin-bottom: 12px;
+}
+.footer-text {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.footer-bottom {
+  border-top: 1px solid #1e293b;
+  padding-top: 20px;
+  text-align: center;
+  font-size: 13px;
+}
