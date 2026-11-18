@@ -1,6 +1,7 @@
-# Environment variables (Bảo mật thông tin DB và JWT_SECRET)
+# Biến môi trường và bí mật; giữ các tệp mẫu cấu hình
 .env
-**/ .env
+.env.*
+!.env.example
 
 # Dependencies
 node_modules/
@@ -9,6 +10,24 @@ node_modules/
 # Build & Logs
 dist/
 build/
+*.log
 npm-debug.log*
 .DS_Store
 Thumbs.db
+
+# Test chỉ lưu trên máy cục bộ, không đưa lên Git
+tests/
+
+# Cache và tệp tạm có thể tạo lại
+.cache/
+.vite/
+.vite-temp/
+.tmp/
+*.tsbuildinfo
+*.tmp
+*.temp
+.eslintcache
+__pycache__/
+*.pyc
+.pytest_cache/
+coverage/

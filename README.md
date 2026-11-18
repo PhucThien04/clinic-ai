@@ -29,7 +29,6 @@ Sơ đồ liệt kê các thư mục nguồn và tệp cấu hình chính tại 
 
 ```text
 clinic-ai/
-├── .ai-workflow/             # Thư mục cục bộ đang rỗng
 ├── ai-service/               # Đang rỗng; dành cho Python/FastAPI dự kiến
 ├── backend/
 │   ├── src/
@@ -40,11 +39,10 @@ clinic-ai/
 │   │   ├── services/        # Nghiệp vụ dùng chung, tạo hồ sơ bản thân
 │   │   ├── utils/           # Sinh ID CHAR(13)
 │   │   └── server.js        # Entry point Backend
-│   ├── tests/               # Unit test và HTTP/PostgreSQL integration test
+│   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
 │   ├── .env.example         # Mẫu cấu hình Backend có nội dung
 │   ├── package.json
-│   ├── package-lock.json
-│   └── test.http            # Request mẫu
+│   └── package-lock.json
 ├── frontend/
 │   ├── public/              # Tài nguyên tĩnh
 │   ├── src/
@@ -57,7 +55,7 @@ clinic-ai/
 │   │   ├── App.tsx
 │   │   ├── main.tsx
 │   │   └── index.css        # Entry CSS Tailwind v4
-│   ├── tests/               # Kiểm thử ngày tháng/thông báo lỗi
+│   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
 │   ├── .gitignore
 │   ├── eslint.config.js
 │   ├── index.html
@@ -75,7 +73,7 @@ clinic-ai/
 └── README.md
 ```
 
-Hiện không có `database/`, `docs/`, `Dockerfile` hoặc Docker Compose trong workspace. Các thư mục rỗng `.ai-workflow/`, `ai-service/` không được Git lưu nếu chưa có tệp, nên có thể vắng mặt khi clone mới. Schema 11 bảng được đặc tả trong `PROJECT_SPEC.md`; repo chưa có SQL bootstrap, migration hoặc seed để tự khởi tạo schema đó.
+Hiện không có `.ai-workflow/`, `database/`, `docs/`, `Dockerfile` hoặc Docker Compose trong workspace. Thư mục rỗng `ai-service/` không được Git lưu nếu chưa có tệp, nên có thể vắng mặt khi clone mới. Schema 11 bảng được đặc tả trong `PROJECT_SPEC.md`; repo chưa có SQL bootstrap, migration hoặc seed để tự khởi tạo schema đó.
 
 ## 4. Hướng dẫn cài đặt & Chạy thử (Development)
 
@@ -158,6 +156,8 @@ npm run dev
 Frontend: thường là `http://localhost:5173` (xem URL Vite in ra). Axios hiện trỏ đến `http://localhost:5000/api` trong `frontend/src/services/api.ts`. Không có bước `pip install`/`uvicorn` chạy được ở hiện trạng vì `ai-service/` chưa có `requirements.txt` hoặc entry point FastAPI.
 
 ## 5. Kiểm thử
+
+Các thư mục `tests/` chỉ được giữ cục bộ và đã gỡ khỏi Git tracking; clone mới không có các tệp test này. Các lệnh kiểm thử dưới đây áp dụng khi máy đã có bộ test cục bộ. Quy tắc `.gitignore` không xóa test trên máy và không xóa chúng khỏi lịch sử commit cũ.
 
 - Tại `backend/`: `npm test` chạy unit test.
 - Tại `backend/`: `npm run test:integration` chạy HTTP/PostgreSQL integration test. Cần DB đã có schema và user có quyền tạo schema. Bộ test tạo schema `patient_test_*` riêng, sao chép cấu trúc bảng và tự dọn sau khi chạy.

@@ -6,7 +6,7 @@
 3. Không tự ý thêm vai trò mới, không đổi tên bảng/cột đã chốt trong `PROJECT_SPEC.md`, không tự ý mở rộng scope ngoài phạm vi đồ án.
 4. Nếu có thay đổi về schema hoặc API, cập nhật đồng bộ `PROJECT_SPEC.md` ngay trong cùng phiên làm việc.
 5. Trước khi mô tả cấu trúc/cách chạy, đối chiếu workspace và cấu hình thực tế. `README.md` hướng dẫn vận hành; `PROJECT_SPEC.md` giữ đặc tả và trạng thái triển khai; tài liệu quy trình bổ trợ không thay thế đặc tả.
-6. Hiện có mã trong `backend/`, `frontend/`; `ai-service/`, `.ai-workflow/` đang rỗng. Không có `database/`, `docs/`, Dockerfile hoặc Docker Compose. Không tự mô tả thư mục rỗng hay thành phần dự kiến là đã triển khai. Thư mục rỗng có thể vắng mặt khi clone vì Git không lưu chúng.
+6. Hiện có mã trong `backend/`, `frontend/`; `ai-service/` đang rỗng. Không có `.ai-workflow/`, `database/`, `docs/`, Dockerfile hoặc Docker Compose. Không tự mô tả thư mục rỗng hay thành phần dự kiến là đã triển khai. Thư mục rỗng có thể vắng mặt khi clone vì Git không lưu chúng.
 
 ## 2. Quy ước Ngôn ngữ & Đặt tên
 - **Tài liệu Markdown & Nội dung giao diện (UI):** Tiếng Việt.
@@ -50,4 +50,5 @@ Luôn tuân thủ nguyên tắc tách lớp (Separation of Concerns), **tuyệt 
 - Mốc môi trường được tài liệu dự án dùng là Node.js **22.14+**, npm và Docker Desktop với Linux containers. Vite đang cài đặt yêu cầu `^20.19.0 || >=22.12.0`; utility test hiện dùng tính năng Node.js từ 22.14. Python/FastAPI là thành phần dự kiến, chưa có mã để chạy ở `ai-service/`.
 - Development: `npm ci`, `npm run dev` trong từng thư mục `backend/` và `frontend/`; cổng Backend `5000`, Vite thường `5173`. Frontend Axios hiện trỏ tới `http://localhost:5000/api`. Trên PowerShell chặn `npm.ps1`, dùng `npm.cmd`.
 - Kiểm tra thay đổi code theo phạm vi: `npm test` và `npm run test:integration` tại `backend/`; `node --test tests/patientActions.test.cjs` và `npm run build` tại `frontend/`. Integration test cần PostgreSQL có schema và quyền tạo schema `patient_test_*`, tự dọn dữ liệu kiểm thử sau khi chạy.
+- Các thư mục `tests/` chỉ lưu cục bộ, được `.gitignore` bỏ qua và đã gỡ Git tracking. Không dùng `git add -f` để đưa lại test lên remote. Clone mới không có bộ test; chỉ chạy các lệnh test khi tệp tương ứng có sẵn trên máy. Luôn giữ cấu hình chạy dự án (`tsconfig*.json`, `vite.config.ts`, `package.json`, lockfile, `eslint.config.js`, `.env.example`) khi dọn cache/log.
 - Với thay đổi chỉ tài liệu: đối chiếu đường dẫn, scripts, dependency, sơ đồ kiến trúc, link và `git diff --check`. Phân biệt trạng thái triển khai hiện có với endpoint/chức năng dự kiến; không cần chạy lại test code nếu không thay đổi hành vi.

@@ -120,7 +120,6 @@ Sơ đồ các thư mục nguồn và tệp cấu hình chính bên dưới đ�
 
 ```text
 clinic-ai/
-├── .ai-workflow/             # Thư mục cục bộ đang rỗng
 ├── ai-service/               # Đang rỗng; dành cho Python/FastAPI dự kiến
 ├── backend/
 │   ├── src/
@@ -131,11 +130,10 @@ clinic-ai/
 │   │   ├── services/        # Nghiệp vụ dùng chung, tạo hồ sơ bản thân
 │   │   ├── utils/           # Sinh ID CHAR(13)
 │   │   └── server.js        # Entry point Backend
-│   ├── tests/               # Unit test và HTTP/PostgreSQL integration test
+│   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
 │   ├── .env.example         # Mẫu cấu hình Backend có nội dung
 │   ├── package.json
-│   ├── package-lock.json
-│   └── test.http            # Request mẫu
+│   └── package-lock.json
 ├── frontend/
 │   ├── public/              # Tài nguyên tĩnh
 │   ├── src/
@@ -148,7 +146,7 @@ clinic-ai/
 │   │   ├── App.tsx
 │   │   ├── main.tsx
 │   │   └── index.css        # Entry CSS Tailwind v4
-│   ├── tests/               # Kiểm thử ngày tháng/thông báo lỗi
+│   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
 │   ├── .gitignore
 │   ├── eslint.config.js
 │   ├── index.html
@@ -166,7 +164,7 @@ clinic-ai/
 └── README.md
 ```
 
-Không có `database/` hoặc `docs/` trong workspace. `.ai-workflow/` và `ai-service/` đang rỗng, có thể không xuất hiện khi clone vì Git không lưu thư mục rỗng. `.env.example` tại gốc hiện rỗng; mẫu cấu hình Backend có nội dung là `backend/.env.example`.
+Không có `.ai-workflow/`, `database/` hoặc `docs/` trong workspace. `ai-service/` đang rỗng, có thể không xuất hiện khi clone vì Git không lưu thư mục rỗng. `.env.example` tại gốc hiện rỗng; mẫu cấu hình Backend có nội dung là `backend/.env.example`. Các thư mục `tests/` giữ cục bộ, được `.gitignore` bỏ qua và không còn trong Git tracking; clone mới không có bộ test. Đây là chính sách lưu trữ, không thay đổi yêu cầu kiểm thử nghiệp vụ.
 
 ### 4.4. Khởi tạo môi trường Development
 
