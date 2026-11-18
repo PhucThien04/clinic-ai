@@ -19,7 +19,7 @@ import {
   X,
   ShieldAlert,
 } from "lucide-react";
-import "./PatientMedicalHistory.css";
+
 
 export default function PatientMedicalHistory(): React.JSX.Element {
   const {
@@ -183,39 +183,39 @@ export default function PatientMedicalHistory(): React.JSX.Element {
 
   return (
     <DashboardLayout>
-      <div className="history-container">
+      <div className="max-w-300 mx-auto my-0 flex flex-col gap-6">
         <div>
-          <h1 className="history-header-title">
+          <h1 className="text-[24px] text-slate-900 mb-2">
             Hồ Sơ Sức Khỏe & Lịch Sử Khám Bệnh
           </h1>
-          <p className="history-header-subtitle">
+          <p className="text-slate-500 text-[14px]">
             Quản lý hồ sơ người thân, khai báo bệnh nền trước khi khám và theo
             dõi chẩn đoán từ bác sĩ.
           </p>
         </div>
 
-        <div className="history-layout">
+        <div className="grid grid-cols-[300px_1fr] gap-6 [align-items:start] max-[768.01px]:grid-cols-[1fr]">
           {/* CỘT TRÁI: DANH SÁCH HỒ SƠ */}
-          <aside className="profiles-sidebar">
-            <h2 className="profiles-title">
-              Danh sách hồ sơ <span className="badge">{profiles.length}</span>
+          <aside className="bg-white [border:1px_solid_#e2e8f0] rounded-[12px] p-5">
+            <h2 className="text-[16px] font-bold text-slate-800 mb-4 flex justify-between items-center">
+              Danh sách hồ sơ <span className="">{profiles.length}</span>
             </h2>
 
-            <div className="profiles-list">
+            <div className="">
               {profiles.map((p) => (
                 <div
                   key={p.IdHoSoBenhNhan}
-                  className={`profile-card ${selectedProfileId === p.IdHoSoBenhNhan ? "active" : ""}`}
+                  className={`group [padding:12px_16px] [border:1px_solid_#e2e8f0] rounded-[8px] mb-3 cursor-pointer [transition:all_0.2s] flex items-center gap-3 relative justify-start [&:hover]:border-sky-600 ${selectedProfileId === p.IdHoSoBenhNhan ? "border-sky-600! bg-sky-50!" : ""}`}
                   onClick={() => setSelectedProfileId(p.IdHoSoBenhNhan)}
                 >
-                  <div className="profile-icon">
+                  <div className="bg-sky-100 text-sky-600 w-10 h-10 rounded-full flex items-center justify-center shrink-0">
                     {p.LoaiThongTin === 0 ? (
                       <User size={20} />
                     ) : (
                       <Users size={20} />
                     )}
                   </div>
-                  <div className="profile-info">
+                  <div className="[&_h4]:m-0 [&_h4]:text-[14px] [&_h4]:text-slate-900 [&_p]:[margin:4px_0_0_0] [&_p]:text-[12px] [&_p]:text-slate-500 flex-1 min-w-0">
                     <h4>
                       {p.LoaiThongTin === 0 ? currentUser?.HoTen : p.HoTen}
                     </h4>
@@ -227,7 +227,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                   </div>
                   {p.LoaiThongTin === 1 && (
                     <div
-                      className="profile-actions"
+                      className="in-[.group]:ml-auto in-[.group]:shrink-0 in-[.group]:flex in-[.group]:gap-1.5 in-[.group]:opacity-85 group-hover:opacity-100 [&_button]:bg-slate-100 [&_button]:[border:1px_solid_#cbd5e1] [&_button]:rounded-[6px] [&_button]:w-7 [&_button]:h-7 [&_button]:flex [&_button]:items-center [&_button]:justify-center [&_button]:cursor-pointer [&_button]:[transition:all_0.2s] [&_button:hover]:bg-slate-200 [&_button:hover]:border-slate-400"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
@@ -251,7 +251,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
             </div>
 
             <button
-              className="add-relative-btn"
+              className="w-full p-[10px] [background:transparent] [border:1px_dashed_#cbd5e1] rounded-[8px] text-sky-600 font-semibold cursor-pointer flex justify-center items-center gap-2 [&:hover]:bg-slate-50 [&:hover]:border-sky-600"
               onClick={handleOpenAddRelative}
             >
               <Plus size={16} /> Thêm hồ sơ người thân
@@ -259,26 +259,20 @@ export default function PatientMedicalHistory(): React.JSX.Element {
           </aside>
 
           {/* CỘT PHẢI: KHU VỰC 1 (BỆNH NỀN) & KHU VỰC 2 (LỊCH SỬ KHÁM) */}
-          <section className="history-content">
+          <section className="bg-white [border:1px_solid_#e2e8f0] rounded-[12px] p-6 min-h-100">
             {/* PHẦN 1: TIỀN SỬ BỆNH / BỆNH NỀN */}
-            <div className="chronic-section">
-              <div className="section-header-row">
+            <div className="">
+              <div className="flex justify-between items-center mb-4">
                 <h2
-                  className="history-content-title"
-                  style={{ border: "none", margin: 0, padding: 0 }}
+                  className="text-[18px] text-slate-900 mb-5 flex items-center gap-2 [border-bottom:1px_solid_#f1f5f9] pb-4 [border:none]! m-0! p-0!"
+
                 >
                   <ShieldAlert size={22} color="#d97706" /> Tiền Sử Bệnh & Bệnh
                   Nền
                 </h2>
                 <button
-                  className="btn-primary"
-                  style={{
-                    fontSize: "0.85rem",
-                    padding: "8px 14px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
+                  className="[padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700 [font-size:0.85rem]! [padding:8px_14px]! flex! items-center! gap-[6px]!"
+
                   onClick={handleOpenAddHistory}
                 >
                   <Plus size={16} /> Khai báo bệnh nền
@@ -286,26 +280,26 @@ export default function PatientMedicalHistory(): React.JSX.Element {
               </div>
 
               {loading ? (
-                <div className="history-empty" style={{ padding: "20px" }}>
+                <div className="text-center [padding:40px_20px] text-slate-500 p-5!" >
                   Đang tải dữ liệu...
                 </div>
               ) : chronicDiseases.length === 0 ? (
-                <div className="chronic-empty-box">
+                <div className="bg-slate-50 [border:1px_dashed_#cbd5e1] rounded-[8px] p-4 text-center text-slate-500 text-[14px]">
                   Chưa có thông tin bệnh nền hoặc dị ứng thuốc nào được khai báo
                   cho hồ sơ này.
                 </div>
               ) : (
-                <div className="chronic-grid">
+                <div className="grid grid-cols-[repeat(auto-fill,_minmax(280px,_1fr))] gap-[14px]">
                   {chronicDiseases.map((item) => (
-                    <div key={item.IdTienSuBenh} className="chronic-card">
-                      <div className="chronic-card-top">
+                    <div key={item.IdTienSuBenh} className="bg-amber-50 [border:1px_solid_#fde68a] rounded-[10px] [padding:14px_16px] flex flex-col gap-2">
+                      <div className="flex justify-between items-start gap-2">
                         <div>
-                          <div className="chronic-title">{item.TenBenh}</div>
-                          <span className="chronic-badge">
+                          <div className="font-bold text-[15px] text-amber-800 mb-1">{item.TenBenh}</div>
+                          <span className="inline-block text-[11px] font-semibold [padding:2px_8px] rounded-[999px] bg-amber-100 text-amber-700 [border:1px_solid_#fcd34d]">
                             {item.TrangThai || "Đang điều trị"}
                           </span>
                         </div>
-                        <div className="profile-actions">
+                        <div className="in-[.group]:ml-auto in-[.group]:shrink-0 in-[.group]:flex in-[.group]:gap-1.5 in-[.group]:opacity-85 group-hover:opacity-100 [&_button]:bg-slate-100 [&_button]:[border:1px_solid_#cbd5e1] [&_button]:rounded-[6px] [&_button]:w-7 [&_button]:h-7 [&_button]:flex [&_button]:items-center [&_button]:justify-center [&_button]:cursor-pointer [&_button]:[transition:all_0.2s] [&_button:hover]:bg-slate-200 [&_button:hover]:border-slate-400">
                           <button
                             title="Sửa bệnh nền"
                             onClick={() => handleOpenEditHistory(item)}
@@ -323,9 +317,9 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                         </div>
                       </div>
 
-                      {item.MoTa && <p className="chronic-desc">{item.MoTa}</p>}
+                      {item.MoTa && <p className="m-0 text-[13px] text-amber-950 leading-[1.4]">{item.MoTa}</p>}
 
-                      <div className="chronic-meta">
+                      <div className="flex flex-wrap justify-between gap-[6px] [font-size:11.5px] text-amber-900 [border-top:1px_dashed_#fcd34d] pt-[6px] [margin-top:auto]">
                         {item.ThoiDiemMac && (
                           <span>
                             Phát hiện:{" "}
@@ -343,28 +337,24 @@ export default function PatientMedicalHistory(): React.JSX.Element {
             </div>
 
             <hr
-              style={{
-                border: "none",
-                borderTop: "1px solid #e2e8f0",
-                margin: "24px 0",
-              }}
+               className="[border:none]! [border-top:1px_solid_#e2e8f0]! [margin:24px_0]!"
             />
 
             {/* PHẦN 2: LỊCH SỬ CÁC LẦN KHÁM BỆNH */}
             <div>
-              <h2 className="history-content-title">
+              <h2 className="text-[18px] text-slate-900 mb-5 flex items-center gap-2 [border-bottom:1px_solid_#f1f5f9] pb-4">
                 <FileText size={22} color="#0284c7" /> Lịch Sử Khám Bệnh Tại
                 Phòng Khám
               </h2>
 
               {loading ? (
-                <div className="history-empty">Đang tải lịch sử khám...</div>
+                <div className="text-center [padding:40px_20px] text-slate-500">Đang tải lịch sử khám...</div>
               ) : examHistory.length === 0 ? (
-                <div className="history-empty">
+                <div className="text-center [padding:40px_20px] text-slate-500">
                   <FileWarning
                     size={44}
                     color="#cbd5e1"
-                    style={{ marginBottom: "10px" }}
+                     className="mb-[10px]!"
                   />
                   <p>Hồ sơ này chưa có lượt khám bệnh nào tại phòng khám.</p>
                 </div>
@@ -373,49 +363,49 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                   {examHistory.map((record) => (
                     <div
                       key={record.IdChiTietLD || record.IdLichDat}
-                      className="record-card"
+                      className="[border:1px_solid_#e2e8f0] rounded-[8px] mb-5 overflow-hidden"
                     >
-                      <div className="record-header">
-                        <div className="record-date">
+                      <div className="bg-slate-50 p-4 [border-bottom:1px_solid_#e2e8f0] flex justify-between items-center">
+                        <div className="font-bold text-sky-600 flex items-center gap-[6px]">
                           <Calendar size={16} /> Ngày khám: {record.NgayKham}
                           {record.GioBatDau
                             ? ` (${record.GioBatDau.slice(0, 5)})`
                             : ""}
                         </div>
-                        <div className="record-doctor">
+                        <div className="text-[13px] text-slate-600 flex items-center gap-1">
                           <Stethoscope size={16} color="#0d9488" /> BS Điều trị:{" "}
                           <strong>{record.TenBacSi}</strong>
                         </div>
                       </div>
 
-                      <div className="record-body">
+                      <div className="p-4 grid grid-cols-[1fr_1fr] gap-5">
                         <div>
-                          <div className="record-section">
-                            <div className="record-label">Lý do khám</div>
-                            <div className="record-value">
+                          <div className="mb-4">
+                            <div className="text-[12px] font-bold text-slate-400 uppercase mb-[6px]">Lý do khám</div>
+                            <div className="text-[14px] text-slate-800 leading-[1.5]">
                               {record.LiDoKham || "Khám nha khoa tổng quát"}
                             </div>
                           </div>
                           {record.TrieuChung && (
-                            <div className="record-section">
-                              <div className="record-label">
+                            <div className="mb-4">
+                              <div className="text-[12px] font-bold text-slate-400 uppercase mb-[6px]">
                                 Triệu chứng lâm sàng
                               </div>
-                              <div className="record-value">
+                              <div className="text-[14px] text-slate-800 leading-[1.5]">
                                 {record.TrieuChung}
                               </div>
                             </div>
                           )}
                           {(record.NhietDo || record.HuyetAp) && (
-                            <div className="vitals-box">
+                            <div className="[background:#f0fdf4] [border:1px_solid_#bbf7d0] rounded-[6px] p-[10px] flex gap-4">
                               {record.NhietDo && (
-                                <div className="vital-item">
+                                <div className="text-[13px] [color:#166534] font-semibold flex items-center gap-[6px]">
                                   <Activity size={14} /> Nhiệt độ:{" "}
                                   {record.NhietDo}°C
                                 </div>
                               )}
                               {record.HuyetAp && (
-                                <div className="vital-item">
+                                <div className="text-[13px] [color:#166534] font-semibold flex items-center gap-[6px]">
                                   <Activity size={14} /> Huyết áp:{" "}
                                   {record.HuyetAp}
                                 </div>
@@ -425,29 +415,29 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                         </div>
 
                         <div>
-                          <div className="record-section">
-                            <div className="record-label">
+                          <div className="mb-4">
+                            <div className="text-[12px] font-bold text-slate-400 uppercase mb-[6px]">
                               Chẩn đoán (Bác sĩ)
                             </div>
                             <div
-                              className="record-value"
-                              style={{ color: "#b45309", fontWeight: 600 }}
+                              className="text-[14px] text-slate-800 leading-[1.5] text-amber-700! font-semibold!"
+
                             >
                               {record.ChuanDoan || "Chưa có chẩn đoán"}
                             </div>
                           </div>
-                          <div className="record-section">
-                            <div className="record-label">
+                          <div className="mb-4">
+                            <div className="text-[12px] font-bold text-slate-400 uppercase mb-[6px]">
                               Kết luận & Hướng điều trị
                             </div>
                             <div
-                              className="record-value"
-                              style={{ display: "flex", gap: "6px" }}
+                              className="text-[14px] text-slate-800 leading-[1.5] flex! gap-[6px]!"
+
                             >
                               <ClipboardCheck
                                 size={16}
                                 color="#16a34a"
-                                style={{ flexShrink: 0, marginTop: "2px" }}
+                                 className="shrink-0! mt-[2px]!"
                               />
                               <span>
                                 {record.KetLuan || "Chưa có kết luận"}
@@ -467,16 +457,16 @@ export default function PatientMedicalHistory(): React.JSX.Element {
 
       {/* MODAL THÊM / SỬA HỒ SƠ NGƯỜI THÂN */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
+        <div className="fixed top-0 [left:0] [right:0] [bottom:0] [background:rgba(0,_0,_0,_0.5)] flex items-center justify-center [z-index:1000]">
+          <div className="bg-white p-6 rounded-[12px] w-full max-w-125 [box-shadow:0_10px_25px_rgba(0,_0,_0,_0.1)]">
+            <div className="flex justify-between items-center mb-5 [&_h3]:m-0 [&_h3]:[font-size:1.25rem] [&_h3]:text-slate-900">
               <h3>
                 {isEditingRelative
                   ? "Cập nhật hồ sơ người thân"
                   : "Thêm hồ sơ người thân"}
               </h3>
               <button
-                className="close-modal-btn"
+                className="[background:none] [border:none] cursor-pointer text-slate-500"
                 onClick={() => setIsModalOpen(false)}
               >
                 <X size={20} />
@@ -484,9 +474,9 @@ export default function PatientMedicalHistory(): React.JSX.Element {
             </div>
 
             <form onSubmit={handleSubmitRelative}>
-              {errorMsg && <div className="error-banner">{errorMsg}</div>}
+              {errorMsg && <div className="bg-red-100 [color:#991b1b] p-[10px] rounded-[6px] [font-size:0.875rem] mb-[14px]">{errorMsg}</div>}
 
-              <div className="form-group">
+              <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)]">
                 <label>Họ và tên người thân (*)</label>
                 <input
                   type="text"
@@ -500,10 +490,10 @@ export default function PatientMedicalHistory(): React.JSX.Element {
               </div>
 
               <div
-                className="form-row"
-                style={{ display: "flex", gap: "12px" }}
+                className="flex! gap-3!"
+
               >
-                <div className="form-group" style={{ flex: 1 }}>
+                <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] flex-1!" >
                   <label>Mối quan hệ (*)</label>
                   <select
                     value={formData.MoiQuanHe}
@@ -521,7 +511,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                   </select>
                 </div>
 
-                <div className="form-group" style={{ flex: 1 }}>
+                <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] flex-1!" >
                   <label>Giới tính</label>
                   <select
                     value={formData.GioiTinh}
@@ -537,10 +527,10 @@ export default function PatientMedicalHistory(): React.JSX.Element {
               </div>
 
               <div
-                className="form-row"
-                style={{ display: "flex", gap: "12px" }}
+                className="flex! gap-3!"
+
               >
-                <div className="form-group" style={{ flex: 1 }}>
+                <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] flex-1!" >
                   <label>Ngày sinh</label>
                   <input
                     type="date"
@@ -551,7 +541,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                   />
                 </div>
 
-                <div className="form-group" style={{ flex: 1 }}>
+                <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] flex-1!" >
                   <label>Số điện thoại</label>
                   <input
                     type="text"
@@ -564,7 +554,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className="form-group">
+              <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)]">
                 <label>CCCD / CMND</label>
                 <input
                   type="text"
@@ -576,7 +566,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)]">
                 <label>Địa chỉ</label>
                 <input
                   type="text"
@@ -589,24 +579,19 @@ export default function PatientMedicalHistory(): React.JSX.Element {
               </div>
 
               <div
-                className="modal-actions"
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "10px",
-                  marginTop: "16px",
-                }}
+                className="flex! justify-end! gap-[10px]! mt-4!"
+
               >
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="[padding:10px_16px] bg-slate-100 [border:1px_solid_#cbd5e1] text-slate-700 rounded-[8px] cursor-pointer font-medium"
                   onClick={() => setIsModalOpen(false)}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="[padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700"
                   disabled={submitting}
                 >
                   {submitting ? "Đang lưu..." : "Lưu thay đổi"}
@@ -619,16 +604,16 @@ export default function PatientMedicalHistory(): React.JSX.Element {
 
       {/* MODAL THÊM / CẬP NHẬT BỆNH NỀN (TIỀN SỬ BỆNH) */}
       {isHistoryModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
+        <div className="fixed top-0 [left:0] [right:0] [bottom:0] [background:rgba(0,_0,_0,_0.5)] flex items-center justify-center [z-index:1000]">
+          <div className="bg-white p-6 rounded-[12px] w-full max-w-125 [box-shadow:0_10px_25px_rgba(0,_0,_0,_0.1)]">
+            <div className="flex justify-between items-center mb-5 [&_h3]:m-0 [&_h3]:[font-size:1.25rem] [&_h3]:text-slate-900">
               <h3>
                 {editingHistoryId
                   ? "Cập nhật thông tin bệnh nền"
                   : "Khai báo bệnh nền (Tiền sử bệnh)"}
               </h3>
               <button
-                className="close-modal-btn"
+                className="[background:none] [border:none] cursor-pointer text-slate-500"
                 onClick={() => setIsHistoryModalOpen(false)}
               >
                 <X size={20} />
@@ -636,7 +621,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
             </div>
 
             <form onSubmit={handleSubmitHistory}>
-              <div className="form-group">
+              <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)]">
                 <label>Tên bệnh / Tình trạng (*)</label>
                 <input
                   type="text"
@@ -650,10 +635,10 @@ export default function PatientMedicalHistory(): React.JSX.Element {
               </div>
 
               <div
-                className="form-row"
-                style={{ display: "flex", gap: "12px" }}
+                className="flex! gap-3!"
+
               >
-                <div className="form-group" style={{ flex: 1 }}>
+                <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] flex-1!" >
                   <label>Trạng thái</label>
                   <select
                     value={historyData.TrangThai}
@@ -670,7 +655,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                   </select>
                 </div>
 
-                <div className="form-group" style={{ flex: 1 }}>
+                <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] flex-1!" >
                   <label>Thời điểm phát hiện (nếu nhớ)</label>
                   <input
                     type="date"
@@ -685,7 +670,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className="form-group">
+              <div className="mb-[14px] [&_label]:block [&_label]:[font-size:0.875rem] [&_label]:font-medium [&_label]:text-slate-700 [&_label]:mb-[6px] [&_input]:w-full [&_input]:[padding:10px_12px] [&_input]:[border:1px_solid_#cbd5e1] [&_input]:rounded-[8px] [&_input]:[font-size:0.95rem] [&_input]:[outline:none] [&_input]:box-border [&_select]:w-full [&_select]:[padding:10px_12px] [&_select]:[border:1px_solid_#cbd5e1] [&_select]:rounded-[8px] [&_select]:[font-size:0.95rem] [&_select]:[outline:none] [&_select]:box-border [&_input:focus]:border-sky-600 [&_input:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)] [&_select:focus]:border-sky-600 [&_select:focus]:[box-shadow:0_0_0_2px_rgba(2,_132,_199,_0.15)]">
                 <label>Mô tả chi tiết / Lưu ý cho bác sĩ</label>
                 <textarea
                   rows={3}
@@ -694,35 +679,24 @@ export default function PatientMedicalHistory(): React.JSX.Element {
                     setHistoryData({ ...historyData, MoTa: e.target.value })
                   }
                   placeholder="Nhập ghi chú thuốc đang dùng hoặc mức độ bệnh..."
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    border: "1px solid #cbd5e1",
-                    boxSizing: "border-box",
-                  }}
+                   className="w-full! p-[10px]! rounded-[8px]! [border:1px_solid_#cbd5e1]! box-border!"
                 />
               </div>
 
               <div
-                className="modal-actions"
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "10px",
-                  marginTop: "16px",
-                }}
+                className="flex! justify-end! gap-[10px]! mt-4!"
+
               >
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="[padding:10px_16px] bg-slate-100 [border:1px_solid_#cbd5e1] text-slate-700 rounded-[8px] cursor-pointer font-medium"
                   onClick={() => setIsHistoryModalOpen(false)}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="[padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700"
                   disabled={submitting}
                 >
                   {submitting

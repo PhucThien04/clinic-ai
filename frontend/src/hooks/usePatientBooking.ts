@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import API from "../services/api";
 import { authService } from "../services/authService";
+import { appointmentService } from "../services/appointmentService";
+import { getCancellationErrorMessage } from "../utils/patientActionErrors";
 
 export interface ScheduleItem {
   IdLichLamViec: string;
@@ -208,18 +210,18 @@ export const usePatientBooking = () => {
     setCancelStatus({ id: idChiTietLD, type: "success", msg: "" });
 
     try {
-      await API.put(`/appointments/${idChiTietLD}/cancel`);
+      await appointmentService.cancelAppointment(idChiTietLD);
       setCancelStatus({
         id: idChiTietLD,
         type: "success",
         msg: "Hủy lịch thành công!",
       });
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setCancelStatus({
         id: idChiTietLD,
         type: "error",
-        msg: err.response?.data?.error || "Lỗi khi hủy lịch hẹn!",
+        msg: getCancellationErrorMessage(err),
       });
     } finally {
       setLoading(false);

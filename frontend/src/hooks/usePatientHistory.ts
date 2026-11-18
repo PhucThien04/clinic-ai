@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { authService } from "../services/authService";
 import API from "../services/api";
+import { patientService } from "../services/patientService";
+import { getProfileDeletionErrorMessage } from "../utils/patientActionErrors";
 
 export interface PatientProfile {
   IdHoSoBenhNhan: string;
@@ -125,16 +127,16 @@ export function usePatientHistory() {
   // Xóa hồ sơ người thân
   const deleteProfile = async (idHoSo: string) => {
     try {
-      await API.delete(`/patients/profiles/${idHoSo}`);
+      await patientService.deleteProfile(idHoSo);
       if (selectedProfileId === idHoSo) {
         setSelectedProfileId("");
       }
       await fetchProfiles();
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.error || "Lỗi khi xóa hồ sơ",
+        error: getProfileDeletionErrorMessage(error),
       };
     }
   };

@@ -422,16 +422,26 @@ exports.getExamHistoriesByProfile = async (req, res) => {
 
 // 9. Xóa hồ sơ bệnh nhân hoặc người thân
 exports.deletePatientProfile = async (req, res) => {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
     const { id } = req.params; // IdHoSoBenhNhan
 
     // Kiểm tra hồ sơ tồn tại
-    const check = await client.query('SELECT * FROM HOSOBENHNHAN WHERE IdHoSoBenhNhan = $1', [id]);
+    const check = await client.query(`SELECT ChuanDoan AS "ChuanDoan", KetLuan AS "KetLuan"
+      FROM HOSOBENHNHAN WHERE IdHoSoBenhNhan = $1 FOR UPDATE`, [id]);
     if (check.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Không tìm thấy hồ sơ bệnh nhân!' });
+    }
+
+    // Bảo toàn hồ sơ đã gắn lịch khám; khóa hồ sơ ngăn liên kết mới khi xóa.
+    const appointments = await client.query(
+      'SELECT IdChiTietLD AS "IdChiTietLD" FROM CHITIETLICHDAT WHERE IdHoSoBenhNhan = $1 LIMIT 1', [id]);
+    if (appointments.rows.length > 0 || check.rows[0].ChuanDoan || check.rows[0].KetLuan) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'Không thể xóa hồ sơ đã có lịch sử khám bệnh tại phòng khám. Hồ sơ đã gắn lịch khám hoặc có chẩn đoán/kết luận cần được lưu giữ.' });
     }
 
     // Xóa thông tin người thân liên quan nếu có
@@ -444,11 +454,14 @@ exports.deletePatientProfile = async (req, res) => {
     await client.query('COMMIT');
     return res.status(200).json({ message: 'Xóa hồ sơ thành công!' });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK').catch(() => {});
+    if (err.code === '23503') {
+      return res.status(409).json({ error: 'Không thể xóa hồ sơ đang có dữ liệu liên quan. Vui lòng kiểm tra lịch khám.' });
+    }
     console.error('Lỗi khi xóa hồ sơ:', err);
     return res.status(500).json({ error: 'Lỗi server nội bộ.' });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 };
 

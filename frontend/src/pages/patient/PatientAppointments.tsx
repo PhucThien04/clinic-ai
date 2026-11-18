@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { usePatientBooking } from "../../hooks/usePatientBooking";
 import { formatDate } from "../../utils/dateUtils";
-import "./PatientAppointments.css";
+
 
 export default function PatientAppointments(): React.JSX.Element {
   const {
@@ -39,10 +39,10 @@ export default function PatientAppointments(): React.JSX.Element {
 
   return (
     <DashboardLayout>
-      <div className="booking-container">
+      <div className="max-w-300 mx-auto my-0 flex flex-col gap-[30px]">
         <div>
-          <h1 className="booking-title">Hệ Thống Đặt Lịch Khám Trực Tuyến</h1>
-          <p className="booking-subtitle">
+          <h1 className="text-[24px] text-slate-900 mb-2">Hệ Thống Đặt Lịch Khám Trực Tuyến</h1>
+          <p className="text-slate-500 text-[14px]">
             Hệ thống tự động lọc lịch trực phù hợp với dịch vụ/sự kiện bạn đã
             chọn.
           </p>
@@ -50,29 +50,29 @@ export default function PatientAppointments(): React.JSX.Element {
 
         {status.msg && (
           <div
-            className={`status-message ${status.type === "success" ? "status-success" : "status-error"}`}
+            className={`flex items-center gap-2 [padding:12px_16px] rounded-[8px] [border:1px_solid_transparent] ${status.type === "success" ? "[background:#dcfce7] [color:#166534] [border-color:#bbf7d0]" : "bg-red-100 [color:#991b1b] [border-color:#fecaca]"}`}
           >
             {status.type === "success" ? (
               <CheckCircle2 size={18} />
             ) : (
               <AlertCircle size={18} />
             )}
-            <span className="status-text">{status.msg}</span>
+            <span className="text-[14px] font-semibold">{status.msg}</span>
           </div>
         )}
 
-        <div className="card step-card">
-          <h2 className="step-title">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm p-6">
+          <h2 className="text-[18px] text-slate-800 mb-4 flex items-center gap-2">
             <User size={20} color="#0284c7" /> Bước 1: Chọn Hồ Sơ Khám & Thông
             Tin
           </h2>
-          <div className="form-grid">
+          <div className="grid grid-cols-[1fr_1fr] gap-5">
             <div>
-              <label className="form-label">Hồ Sơ Bệnh Nhân *</label>
+              <label className="block text-[13px] font-semibold text-slate-700 mb-[6px]">Hồ Sơ Bệnh Nhân *</label>
               <select
                 value={selectedProfile}
                 onChange={(e) => setSelectedProfile(e.target.value)}
-                className="input-field form-select"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[14px] outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15 bg-white"
               >
                 {profiles.map((p) => (
                   <option key={p.IdHoSoBenhNhan} value={p.IdHoSoBenhNhan}>
@@ -85,7 +85,7 @@ export default function PatientAppointments(): React.JSX.Element {
               </select>
             </div>
             <div>
-              <label className="form-label">
+              <label className="block text-[13px] font-semibold text-slate-700 mb-[6px]">
                 Lý do khám / Dịch vụ / Sự kiện
               </label>
               <input
@@ -93,23 +93,23 @@ export default function PatientAppointments(): React.JSX.Element {
                 value={liDoKham}
                 onChange={(e) => setLiDoKham(e.target.value)}
                 placeholder="Ví dụ: Nhổ răng khôn..."
-                className="input-field"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-[14px] outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/15"
               />
             </div>
           </div>
         </div>
 
-        <div className="card step-card">
-          <h2 className="step-title">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm p-6">
+          <h2 className="text-[18px] text-slate-800 mb-4 flex items-center gap-2">
             <Calendar size={20} color="#0d9488" /> Bước 2: Chọn Ngày & Khung Giờ
             Trực
           </h2>
 
-          <div className="date-section">
-            <label className="date-label">Chọn Ngày Khám:</label>
-            <div className="date-buttons">
+          <div className="mb-5">
+            <label className="block text-[13px] font-semibold text-slate-700 mb-2">Chọn Ngày Khám:</label>
+            <div className="flex gap-[10px] flex-wrap">
               {availableDates.length === 0 ? (
-                <div className="date-empty">
+                <div className="text-red-500 text-[14px] font-semibold">
                   {filterKeyword
                     ? `Chưa có lịch trực nào cho "${filterKeyword}".`
                     : "Chưa có lịch làm việc nào được mở."}
@@ -123,7 +123,7 @@ export default function PatientAppointments(): React.JSX.Element {
                       setSelectedDate(date);
                       setSelectedScheduleId("");
                     }}
-                    className={`date-btn ${selectedDate === date ? "date-btn-active" : "date-btn-inactive"}`}
+                    className={`[padding:10px_18px] rounded-[8px] font-semibold cursor-pointer text-[14px] [transition:all_0.2s] ${selectedDate === date ? "[border:2px_solid_#0284c7] bg-sky-600 text-white" : "[border:1px_solid_#cbd5e1] bg-white text-slate-700"}`}
                   >
                     {formatDate(date)}
                   </button>
@@ -133,15 +133,15 @@ export default function PatientAppointments(): React.JSX.Element {
           </div>
 
           <div>
-            <label className="date-label">
+            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
               Khung Giờ Trực {filterKeyword ? "Dành Riêng" : ""}:
             </label>
             {filteredSchedules.length === 0 ? (
-              <div className="schedule-empty">
+              <div className="p-5 text-center bg-slate-50 rounded-[8px] text-slate-500">
                 Không có ca trực phù hợp trong ngày này.
               </div>
             ) : (
-              <div className="schedule-grid">
+              <div className="grid grid-cols-[repeat(auto-fill,_minmax(260px,_1fr))] gap-4">
                 {filteredSchedules.map((s) => {
                   const isBooked = bookedScheduleIds.has(s.IdLichLamViec);
                   const isSelected = selectedScheduleId === s.IdLichLamViec;
@@ -151,32 +151,32 @@ export default function PatientAppointments(): React.JSX.Element {
                       onClick={() => {
                         if (!isBooked) setSelectedScheduleId(s.IdLichLamViec);
                       }}
-                      className={`schedule-card ${isBooked ? "schedule-booked" : isSelected ? "schedule-selected" : "schedule-default"}`}
+                      className={`rounded-[12px] p-4 [transition:all_0.2s] relative ${isBooked ? "[border:2px_solid_#cbd5e1] bg-slate-100 cursor-not-allowed [opacity:0.6]" : isSelected ? "[border:2px_solid_#0284c7] bg-sky-50 cursor-pointer" : "[border:2px_solid_#e2e8f0] bg-white cursor-pointer"}`}
                     >
                       {isBooked ? (
-                        <div className="schedule-badge-booked">
+                        <div className="absolute [top:12px] [right:12px] bg-slate-400 text-white rounded-[20px] [padding:2px_8px] text-[11px] font-bold flex items-center gap-1">
                           <Lock size={10} /> Đã kín chỗ
                         </div>
                       ) : (
                         isSelected && (
-                          <div className="schedule-badge-selected">
+                          <div className="absolute [top:12px] [right:12px] bg-sky-600 text-white rounded-full w-[22px] h-[22px] flex items-center justify-center">
                             <Check size={14} />
                           </div>
                         )
                       )}
-                      <div className="schedule-time">
+                      <div className="flex items-center gap-[6px] text-[16px] font-extrabold text-slate-900 mb-2">
                         <Clock
                           size={16}
                           color={isBooked ? "#94a3b8" : "#0284c7"}
                         />
                         {s.GioBatDau} - {s.GioKetThuc}
                       </div>
-                      <div className="schedule-doctor">
+                      <div className="text-[13px] text-slate-700 flex items-center gap-[6px]">
                         <Stethoscope size={14} color="#0d9488" />{" "}
                         <strong>BS:</strong> {s.TenBacSi}
                       </div>
                       {s.GhiChu && (
-                        <div className="schedule-note">{s.GhiChu}</div>
+                        <div className="text-[12px] text-sky-600 bg-sky-100 [padding:4px_8px] rounded-[4px] mt-[6px]">{s.GhiChu}</div>
                       )}
                     </div>
                   );
@@ -185,12 +185,12 @@ export default function PatientAppointments(): React.JSX.Element {
             )}
           </div>
 
-          <div className="submit-section">
+          <div className="mt-6 flex justify-end [border-top:1px_solid_#e2e8f0] pt-5">
             <button
               type="button"
               disabled={loading || !selectedScheduleId}
               onClick={handleBooking}
-              className="btn btn-primary submit-btn"
+              className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[14px] font-semibold no-underline cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 [padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700 [padding:12px_30px] text-[15px] cursor-pointer [&:disabled]:[opacity:0.6] [&:disabled]:cursor-not-allowed"
             >
               {loading ? "Đang xử lý..." : "Xác Nhận Đặt Lịch"}
             </button>
@@ -198,13 +198,13 @@ export default function PatientAppointments(): React.JSX.Element {
         </div>
 
         <div>
-          <h2 className="step-title">
+          <h2 className="text-[18px] text-slate-800 mb-4 flex items-center gap-2">
             <Calendar size={20} color="#0d9488" /> Lịch Hẹn Đã Đặt
           </h2>
           {appointments.length === 0 ? (
-            <div className="card appt-empty">Chưa có lịch hẹn khám nào.</div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm text-center p-[30px] text-slate-500">Chưa có lịch hẹn khám nào.</div>
           ) : (
-            <div className="appt-grid">
+            <div className="grid grid-cols-[repeat(auto-fill,_minmax(340px,_1fr))] gap-4">
               {appointments.map((apt) => {
                 const showCancelStatus =
                   cancelStatus.id === apt.IdChiTietLD && cancelStatus.msg;
@@ -214,26 +214,21 @@ export default function PatientAppointments(): React.JSX.Element {
                 return (
                   <div
                     key={apt.IdChiTietLD}
-                    className="card appt-card"
-                    style={{ opacity: apt.TrangThai === "Đã hủy" ? 0.6 : 1 }}
+                    className={"rounded-xl border border-slate-200 bg-white p-6 shadow-sm p-5 [border-left:5px_solid_#0284c7] flex flex-col gap-[10px]" + " " + (apt.TrangThai === "Đã hủy" ? "[opacity:0.6]!" : "[opacity:1]!")}
+
                   >
-                    <div className="appt-header">
+                    <div className="flex justify-between items-center">
                       <span
-                        className="appt-status"
-                        style={{
-                          background:
-                            apt.TrangThai === "Đã hủy" ? "#f1f5f9" : "#e0f2fe",
-                          color:
-                            apt.TrangThai === "Đã hủy" ? "#64748b" : "#0284c7",
-                        }}
+                        className={"bg-sky-100 text-sky-600 [padding:4px_10px] rounded-[20px] text-[12px] font-bold" + " " + (apt.TrangThai === "Đã hủy" ? "bg-slate-100!" : "bg-sky-100!") + " " + (apt.TrangThai === "Đã hủy" ? "text-slate-500!" : "text-sky-600!")}
+
                       >
                         {apt.TrangThai}
                       </span>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <span className="appt-id">Mã: {apt.IdLichDat}</span>
+                      <div  className="flex! items-center!">
+                        <span className="text-[13px] text-slate-500 font-semibold">Mã: {apt.IdLichDat}</span>
                         {canCancel && (
                           <button
-                            className="appt-cancel-btn"
+                            className="[padding:6px_12px] [background:transparent] text-red-500 [border:1px_solid_#fca5a5] rounded-[6px] text-[12px] font-semibold cursor-pointer [transition:all_0.2s] ml-[10px] [&:hover:not(:disabled)]:bg-red-100 [&:hover:not(:disabled)]:border-red-500 [&:disabled]:[opacity:0.5] [&:disabled]:cursor-not-allowed"
                             onClick={() => cancelAppointment(apt.IdChiTietLD)}
                             disabled={loading}
                           >
@@ -245,22 +240,23 @@ export default function PatientAppointments(): React.JSX.Element {
 
                     {showCancelStatus && (
                       <div
-                        className={`cancel-message ${cancelStatus.type === "success" ? "cancel-success" : "cancel-error"}`}
+                        role={cancelStatus.type === "error" ? "alert" : "status"}
+                        className={`text-[12px] p-2 rounded-[4px] mt-2 ${cancelStatus.type === "success" ? "[background:#dcfce7] [color:#166534]" : "bg-red-100 [color:#991b1b]"}`}
                       >
                         {cancelStatus.msg}
                       </div>
                     )}
 
-                    <div className="appt-time">
+                    <div className="text-[15px] font-bold text-slate-900 flex items-center gap-[6px]">
                       <Calendar size={16} color="#0284c7" /> Ngày:{" "}
                       {formatDate(apt.NgayLamViec)} ({apt.GioBatDau} -{" "}
                       {apt.GioKetThuc})
                     </div>
-                    <div className="appt-doctor">
-                      <strong style={{ color: "#0d9488" }}>Bác sĩ:</strong>{" "}
+                    <div className="text-[14px] text-slate-700">
+                      <strong  className="text-teal-600!">Bác sĩ:</strong>{" "}
                       {apt.TenBacSi}
                     </div>
-                    <div className="appt-reason">
+                    <div className="text-[14px] text-slate-500 bg-slate-50 [padding:8px_12px] rounded-[6px]">
                       <strong>Lý do:</strong> {apt.LiDoKham}
                     </div>
                   </div>

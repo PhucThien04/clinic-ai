@@ -138,67 +138,47 @@ export default function DoctorExam(): React.JSX.Element {
   return (
     <DashboardLayout>
       <div
-        style={{
-          maxWidth: "1000px",
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "24px",
-        }}
+         className="max-w-250! mx-auto! my-0! flex! flex-col! gap-6!"
       >
         {/* Header Title */}
         <div>
           <h1
-            style={{ fontSize: "24px", color: "#0f172a", marginBottom: "8px" }}
+             className="text-[24px]! text-slate-900! mb-2!"
           >
             Phòng Khám Bác Sĩ
           </h1>
-          <p style={{ color: "#64748b", fontSize: "14px" }}>
+          <p  className="text-slate-500! text-[14px]!">
             Tra cứu sinh hiệu từ Y tá, thực hiện chẩn đoán và tham khảo Trợ lý
             AI.
           </p>
         </div>
 
         {/* 1. Khu vực tìm kiếm hồ sơ */}
-        <div className="card">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2
-            style={{
-              fontSize: "16px",
-              color: "#1e293b",
-              marginBottom: "16px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
+             className="text-[16px]! text-slate-800! mb-4! flex! items-center! gap-2!"
           >
             <Search size={18} color="#0284c7" /> Tìm Kiếm Hồ Sơ Khám
           </h2>
           <form
             onSubmit={handleSearch}
-            style={{ display: "flex", gap: "12px" }}
+             className="flex! gap-3!"
           >
-            <div style={{ flex: 1, position: "relative" }}>
+            <div  className="flex-1! relative!">
               <input
                 type="text"
                 value={idHoSoBenhNhan}
                 onChange={(e) => setIdHoSoBenhNhan(e.target.value)}
                 placeholder="Nhập Mã Hồ Sơ Bệnh Nhân (VD: HS26100000001)..."
                 required
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: "8px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  outline: "none",
-                }}
+                 className="w-full! [padding:10px_14px]! rounded-[8px]! [border:1px_solid_#cbd5e1]! text-[14px]! [outline:none]!"
               />
             </div>
             <button
               type="submit"
               disabled={loadingSearch}
-              className="btn btn-primary"
-              style={{ padding: "10px 24px", whiteSpace: "nowrap" }}
+              className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[14px] font-semibold no-underline cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 [padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700 [padding:10px_24px]! [white-space:nowrap]!"
+
             >
               {loadingSearch ? "Đang tìm..." : "Tra cứu"}
             </button>
@@ -206,14 +186,7 @@ export default function DoctorExam(): React.JSX.Element {
 
           {searchStatus.msg && (
             <div
-              style={{
-                marginTop: "16px",
-                fontSize: "13px",
-                color: searchStatus.type === "success" ? "#166534" : "#991b1b",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
+               className={"mt-4!" + " " + "text-[13px]!" + " " + (searchStatus.type === "success" ? "[color:#166534]!" : "[color:#991b1b]!") + " " + "flex!" + " " + "items-center!" + " " + "gap-[6px]!"}
             >
               {searchStatus.type === "success" ? (
                 <CheckCircle2 size={16} />
@@ -228,118 +201,78 @@ export default function DoctorExam(): React.JSX.Element {
         {/* 2. Khu vực hiển thị thông tin nếu tìm thấy hồ sơ */}
         {patientRecord && (
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 300px",
-              gap: "24px",
-              alignItems: "start",
-            }}
+             className="grid! grid-cols-[1fr_300px]! gap-6! [align-items:start]!"
           >
             {/* Cột trái: Thông tin khám bệnh (Sinh hiệu + Chẩn đoán) */}
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "24px" }}
+               className="flex! flex-col! gap-6!"
             >
               {/* Thông tin Sinh hiệu từ Y tá */}
-              <div className="card" style={{ borderLeft: "4px solid #0ea5e9" }}>
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm [border-left:4px_solid_#0ea5e9]!" >
                 <h3
-                  style={{
-                    fontSize: "16px",
-                    color: "#0f172a",
-                    marginBottom: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
+                   className="text-[16px]! text-slate-900! mb-4! flex! items-center! gap-2!"
                 >
                   <Activity size={18} color="#0ea5e9" /> Dữ liệu sinh hiệu lâm
                   sàng (Từ Y tá)
                 </h3>
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: "16px",
-                    background: "#f8fafc",
-                    padding: "16px",
-                    borderRadius: "8px",
-                  }}
+                   className="grid! grid-cols-[1fr_1fr_1fr]! gap-4! bg-slate-50! p-4! rounded-[8px]!"
                 >
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                    <div  className="text-[12px]! text-slate-500!">
                       Huyết áp
                     </div>
                     <div
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: "#0f172a",
-                      }}
+                       className="text-[15px]! font-semibold! text-slate-900!"
                     >
                       {patientRecord.HuyetApTamThu || "--"}/
                       {patientRecord.HuyetApTamTruong || "--"} mmHg
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                    <div  className="text-[12px]! text-slate-500!">
                       Nhịp tim
                     </div>
                     <div
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: "#0f172a",
-                      }}
+                       className="text-[15px]! font-semibold! text-slate-900!"
                     >
                       {patientRecord.NhipTim || "--"} bpm
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                    <div  className="text-[12px]! text-slate-500!">
                       Nhiệt độ
                     </div>
                     <div
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: "#0f172a",
-                      }}
+                       className="text-[15px]! font-semibold! text-slate-900!"
                     >
                       {patientRecord.NhietDo || "--"} °C
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                    <div  className="text-[12px]! text-slate-500!">
                       Cân nặng/Chiều cao
                     </div>
                     <div
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: "#0f172a",
-                      }}
+                       className="text-[14px]! font-semibold! text-slate-900!"
                     >
                       {patientRecord.CanNang || "--"} kg /{" "}
                       {patientRecord.ChieuCao || "--"} cm
                     </div>
                   </div>
                 </div>
-                <div style={{ marginTop: "16px", fontSize: "14px" }}>
-                  <strong style={{ color: "#334155" }}>
+                <div  className="mt-4! text-[14px]!">
+                  <strong  className="text-slate-700!">
                     Triệu chứng khởi phát:
                   </strong>{" "}
-                  <span style={{ color: "#ef4444", fontWeight: 500 }}>
+                  <span  className="text-red-500! font-medium!">
                     {patientRecord.TrieuChung || "Không có ghi nhận"} (Mức độ:{" "}
                     {patientRecord.MucDo || "--"})
                   </span>
                 </div>
                 {patientRecord.GhiChu && (
                   <div
-                    style={{
-                      marginTop: "8px",
-                      fontSize: "13px",
-                      color: "#64748b",
-                      fontStyle: "italic",
-                    }}
+                     className="mt-2! text-[13px]! text-slate-500! [font-style:italic]!"
                   >
                     * Ghi chú Y tá: {patientRecord.GhiChu}
                   </div>
@@ -347,16 +280,9 @@ export default function DoctorExam(): React.JSX.Element {
               </div>
 
               {/* Form Chẩn đoán của Bác sĩ */}
-              <div className="card" style={{ borderLeft: "4px solid #10b981" }}>
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm [border-left:4px_solid_#10b981]!" >
                 <h3
-                  style={{
-                    fontSize: "16px",
-                    color: "#0f172a",
-                    marginBottom: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
+                   className="text-[16px]! text-slate-900! mb-4! flex! items-center! gap-2!"
                 >
                   <Stethoscope size={18} color="#10b981" /> Cập nhật Chẩn đoán &
                   Kết luận
@@ -364,19 +290,7 @@ export default function DoctorExam(): React.JSX.Element {
 
                 {saveStatus.msg && (
                   <div
-                    style={{
-                      marginBottom: "16px",
-                      fontSize: "13px",
-                      color:
-                        saveStatus.type === "success" ? "#166534" : "#991b1b",
-                      background:
-                        saveStatus.type === "success" ? "#dcfce7" : "#fee2e2",
-                      padding: "10px",
-                      borderRadius: "6px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
+                     className={"mb-4!" + " " + "text-[13px]!" + " " + (saveStatus.type === "success" ? "[color:#166534]!" : "[color:#991b1b]!") + " " + (saveStatus.type === "success" ? "[background:#dcfce7]!" : "bg-red-100!") + " " + "p-[10px]!" + " " + "rounded-[6px]!" + " " + "flex!" + " " + "items-center!" + " " + "gap-[6px]!"}
                   >
                     {saveStatus.type === "success" ? (
                       <CheckCircle2 size={16} />
@@ -389,23 +303,13 @@ export default function DoctorExam(): React.JSX.Element {
 
                 <form
                   onSubmit={handleSaveDiagnosis}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
+                   className="flex! flex-col! gap-4!"
                 >
                   <div>
                     <label
-                      style={{
-                        display: "block",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "#475569",
-                        marginBottom: "6px",
-                      }}
+                       className="block! text-[13px]! font-semibold! text-slate-600! mb-[6px]!"
                     >
-                      Chẩn đoán Y khoa <span style={{ color: "red" }}>*</span>
+                      Chẩn đoán Y khoa <span  className="[color:red]!">*</span>
                     </label>
                     <textarea
                       name="ChuanDoan"
@@ -414,29 +318,15 @@ export default function DoctorExam(): React.JSX.Element {
                       rows={3}
                       required
                       placeholder="Nhập chẩn đoán chuyên môn..."
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #cbd5e1",
-                        fontSize: "14px",
-                        outline: "none",
-                        resize: "vertical",
-                      }}
+                       className="w-full! p-[10px]! rounded-[8px]! [border:1px_solid_#cbd5e1]! text-[14px]! [outline:none]! [resize:vertical]!"
                     ></textarea>
                   </div>
                   <div>
                     <label
-                      style={{
-                        display: "block",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "#475569",
-                        marginBottom: "6px",
-                      }}
+                       className="block! text-[13px]! font-semibold! text-slate-600! mb-[6px]!"
                     >
                       Kết luận & Hướng điều trị{" "}
-                      <span style={{ color: "red" }}>*</span>
+                      <span  className="[color:red]!">*</span>
                     </label>
                     <textarea
                       name="KetLuan"
@@ -445,27 +335,15 @@ export default function DoctorExam(): React.JSX.Element {
                       rows={4}
                       required
                       placeholder="Đưa ra phác đồ điều trị, đơn thuốc hoặc lời khuyên..."
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #cbd5e1",
-                        fontSize: "14px",
-                        outline: "none",
-                        resize: "vertical",
-                      }}
+                       className="w-full! p-[10px]! rounded-[8px]! [border:1px_solid_#cbd5e1]! text-[14px]! [outline:none]! [resize:vertical]!"
                     ></textarea>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <div  className="flex! justify-end!">
                     <button
                       type="submit"
                       disabled={loadingSave}
-                      className="btn"
-                      style={{
-                        background: "#10b981",
-                        color: "white",
-                        padding: "10px 24px",
-                      }}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[14px] font-semibold no-underline cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 [background:#10b981]! text-white! [padding:10px_24px]!"
+
                     >
                       <Save size={18} />{" "}
                       {loadingSave ? "Đang lưu..." : "Lưu Hồ Sơ Khám"}
@@ -477,45 +355,24 @@ export default function DoctorExam(): React.JSX.Element {
 
             {/* Cột phải: Khu vực Trợ lý AI (Placeholder cho Tuần 11-12) */}
             <div
-              className="card"
-              style={{
-                background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
-                border: "1px solid #e2e8f0",
-              }}
+              className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm [background:linear-gradient(180deg,_#f8fafc_0%,_#f1f5f9_100%)]! [border:1px_solid_#e2e8f0]!"
+
             >
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginBottom: "16px",
-                }}
+                 className="flex! items-center! gap-2! mb-4!"
               >
                 <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    background: "#ccfbf1",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+                   className="w-8! h-8! bg-teal-100! rounded-full! flex! items-center! justify-center!"
                 >
                   <Sparkles size={16} color="#0d9488" />
                 </div>
-                <h3 style={{ fontSize: "16px", color: "#0f172a" }}>
+                <h3  className="text-[16px]! text-slate-900!">
                   Phân Tích AI
                 </h3>
               </div>
 
               <div
-                style={{
-                  fontSize: "13px",
-                  color: "#64748b",
-                  lineHeight: "1.6",
-                  marginBottom: "20px",
-                }}
+                 className="text-[13px]! text-slate-500! leading-[1.6]! mb-5!"
               >
                 Trợ lý AI giúp tổng hợp tiền sử bệnh án, phân tích chỉ số lâm
                 sàng hiện tại và đưa ra cảnh báo sớm. (Tính năng sẽ được kích
@@ -523,26 +380,15 @@ export default function DoctorExam(): React.JSX.Element {
               </div>
 
               <button
-                className="btn btn-outline"
+                className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[14px] font-semibold no-underline cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 border border-slate-300 bg-white text-slate-700 hover:border-sky-600 hover:bg-sky-50 hover:text-sky-600 w-full! justify-center! text-[13px]! [opacity:0.6]!"
                 disabled
-                style={{
-                  width: "100%",
-                  justifyContent: "center",
-                  fontSize: "13px",
-                  opacity: 0.6,
-                }}
+
               >
                 <Sparkles size={14} /> Tóm tắt tiền sử bệnh
               </button>
 
               <div
-                style={{
-                  marginTop: "12px",
-                  fontSize: "11px",
-                  color: "#94a3b8",
-                  fontStyle: "italic",
-                  textAlign: "center",
-                }}
+                 className="mt-3! text-[11px]! text-slate-400! [font-style:italic]! text-center!"
               >
                 AI hỗ trợ lâm sàng, không thay thế quyết định chuyên môn của bác
                 sĩ.

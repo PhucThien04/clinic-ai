@@ -1,111 +1,37 @@
-# Clinic AI — Hướng dẫn cho Coding Agent
+# Clinic AI — Hướng dẫn Bắt buộc cho Coding Agent (Codex)
 
-## 1. Quy tắc bắt buộc
+## 1. Source of Truth & Quy tắc Khởi đầu
+1. File **`PROJECT_SPEC.md`** tại thư mục gốc là nguồn sự thật duy nhất (Single Source of Truth) tổng hợp toàn bộ yêu cầu đề tài, Use Case, Database Schema và API. Không cần tìm kiếm thêm file `.docx` bên ngoài.
+2. Trước khi tạo mới hoặc chỉnh sửa tính năng, đọc `PROJECT_SPEC.md` để xác định đúng `VaiTro`, bảng dữ liệu và endpoint liên quan.
+3. Không tự ý thêm vai trò mới, không đổi tên bảng/cột đã chốt trong `PROJECT_SPEC.md`, không tự ý mở rộng scope ngoài phạm vi đồ án.
+4. Nếu có thay đổi về schema hoặc API, cập nhật đồng bộ `PROJECT_SPEC.md` ngay trong cùng phiên làm việc.
 
-Trước khi triển khai hoặc thay đổi một feature quan trọng:
+## 2. Quy ước Ngôn ngữ & Đặt tên
+- **Tài liệu Markdown & Nội dung giao diện (UI):** Tiếng Việt.
+- **Thuật ngữ kỹ thuật phổ biến:** Giữ nguyên tiếng Anh (REST API, JWT, Hook, Service, Component, Middleware...).
+- **Code, biến, hàm, class, file, route, tên bảng/cột:** Giữ đúng chuẩn đã định nghĩa (PascalCase cho tên cột DB như `IdHoSoBenhNhan`, `LoaiThongTin`; camelCase cho biến/hàm JS/TS).
+- **Git commit message:** Tiếng Anh ngắn gọn, rõ ý (ví dụ: `feat(doctor): build clinical workspace with AI summary`).
 
-1. Đọc `PROJECT_SPEC.md`.
-2. Xác định feature thuộc scope nào.
-3. Không tự biến nội dung `Proposed` thành `Official`.
-4. Không mở rộng scope nếu không có lý do rõ ràng.
-5. Ưu tiên giải pháp đơn giản, dễ bảo trì và phù hợp project cá nhân 3 tháng.
+## 3. Clean Code & Kiến trúc Frontend (Tailwind CSS)
+Luôn tuân thủ nguyên tắc tách lớp (Separation of Concerns), **tuyệt đối không gộp chung logic xử lý và API call vào file Component**:
+- **`src/services/`**: Chứa các hàm gọi HTTP API qua Axios (`api.ts`, `authService.ts`, ...).
+- **`src/hooks/`**: Chứa custom hooks quản lý state, side-effects và business logic của từng trang/tính năng (ví dụ: `usePatientHistory.ts`, `usePatientBooking.ts`, `useClinic.ts`).
+- **`src/utils/`**: Chứa các hàm tiện ích thuần túy (format ngày tháng, tiền tệ, validate).
+- **`src/pages/` & `src/components/`**: Chỉ tập trung render giao diện JSX và nhận dữ liệu/hàm xử lý từ hooks. Bắt buộc dùng `import type` cho các TypeScript interfaces/types khi `verbatimModuleSyntax` được bật.
+- **Styling (Tailwind CSS):**
+  - Sử dụng **Tailwind CSS utility classes** trực tiếp trong JSX; **không** tạo thêm các file `.css` rời cho từng page/component (chỉ giữ `src/index.css` chứa `@import "tailwindcss";`).
+  - Duy trì hệ màu nhất quán của phòng khám: tông chủ đạo y tế `sky-600` (`#0284c7`) và `teal-600` (`#0d9488`), nền sáng `slate-50`, viền `slate-200`, cảnh báo bệnh nền tông `amber`.
+  - Đảm bảo `DashboardLayout` giữ thanh sidebar cố định trên màn hình (`h-screen sticky top-0`) để khu vực tài khoản và nút đăng xuất không bị trôi khi nội dung chính dài.
 
-## 2. Quy ước ngôn ngữ
+## 4. Quy tắc Backend & Database (PostgreSQL)
+- **Độ dài ID chuẩn `CHAR(13)`:** Mọi ID mới bắt buộc sinh qua `backend/src/utils/idGenerator.js` (`generateId('TK' | 'PK' | 'SK' | 'DV' | 'LLV' | 'LD' | 'HS' | 'NT' | 'CT' | 'TS' | 'AI')`). Không hard-code ID độ dài khác 13 ký tự.
+- **Không ghi đè lịch sử khám:** Khi tạo lịch đặt (`POST /api/appointments`), nếu `IdHoSoBenhNhan` được chọn đã từng gắn với một `CHITIETLICHDAT` khác hoặc đã có `ChuanDoan`/`KetLuan`, Backend **phải** tạo mới một dòng `HOSOBENHNHAN` (và nhân bản `THONGTINNGUOITHAN` nếu `LoaiThongTin = 1`) cho lượt khám mới.
+- **Alias PascalCase trong SQL:** Khi truy vấn PostgreSQL, luôn đặt alias trong ngoặc kép `AS "TenCot"` để trả về JSON khớp với interface PascalCase ở Frontend.
+- **Transaction:** Các thao tác ghi nhiều bảng cùng lúc (tạo hồ sơ + người thân, tạo lịch đặt + chi tiết lịch đặt) phải bọc trong `BEGIN ... COMMIT / ROLLBACK`.
+- **Parameterized Queries:** Luôn dùng `$1, $2, ...` với thư viện `pg` để chống SQL Injection.
 
-- Tài liệu Markdown: **Tiếng Việt**.
-- Thuật ngữ kỹ thuật phổ biến: giữ **English**.
-- Code, variable, function, class, table, column, endpoint: **English**.
-- Git commit message: **English**.
-
-Không dịch gượng ép thuật ngữ kỹ thuật.
-
-## 3. Technology baseline
-
-- Frontend: React.
-- Backend: Node.js + Express.js.
-- AI Service: Python + FastAPI.
-- Database: PostgreSQL.
-- API style: REST.
-- Deployment direction: Docker + cloud.
-
-Đây là baseline đề xuất; nếu `PROJECT_SPEC.md` được cập nhật thì phải ưu tiên phiên bản mới nhất.
-
-## 4. Kiến trúc
-
-Không tạo microservices đầy đủ nếu chưa có lý do.
-
-Giữ hệ thống đơn giản:
-
-React → Node.js/Express → PostgreSQL
-
-và:
-
-Node.js/Express → Python/FastAPI → External AI API
-
-## 5. AI safety
-
-- AI là clinical decision support.
-- Không trình bày AI output như chẩn đoán y khoa chắc chắn.
-- Không bịa dữ liệu bệnh nhân.
-- Ưu tiên structured output.
-- Khi có thể, lưu nguồn dữ liệu/context dùng để tạo kết quả.
-- Cảnh báo nên kết hợp rule-based detection và AI analysis.
-- AI output phải được đánh dấu rõ ràng.
-
-## 6. Security
-
-- Không hard-code secrets.
-- Không commit `.env`.
-- Dùng `.env.example` để mô tả biến môi trường.
-- Hash password.
-- Validate input.
-- Kiểm tra authentication và authorization ở backend.
-- Không sử dụng dữ liệu bệnh nhân thật trong development nếu chưa được phép.
-
-## 7. Development style
-
-- Không over-engineer.
-- Không tạo abstraction chỉ để "trông chuyên nghiệp".
-- Tách business logic khỏi route/controller khi module đủ lớn.
-- Reuse component/service khi có nhu cầu thực tế.
-- Ưu tiên code dễ đọc và dễ test.
-
-## 8. Khi implement feature
-
-Trình tự ưu tiên:
-
-1. Xác định requirement.
-2. Xác định data model.
-3. Thiết kế API.
-4. Implement backend.
-5. Implement frontend.
-6. Integration.
-7. Test.
-8. Cập nhật documentation nếu architecture hoặc behavior thay đổi.
-
-## 9. Không tự ý
-
-Coding agent không được tự ý:
-
-- Thêm role mới.
-- Thêm module lớn.
-- Đổi database.
-- Đổi framework chính.
-- Đổi AI provider.
-- Thêm mobile application.
-- Thêm feature AI ngoài scope.
-
-Nếu thay đổi có ảnh hưởng kiến trúc hoặc scope, phải nêu rõ lý do và cập nhật `PROJECT_SPEC.md`.
-
-## 10. Source of truth
-
-Thứ tự ưu tiên khi có mâu thuẫn:
-
-1. Yêu cầu chính thức mới nhất của giảng viên.
-2. Nội dung `Confirmed` trong `PROJECT_SPEC.md`.
-3. Nội dung `Official` trong tài liệu nguồn.
-4. Quyết định đã được thống nhất.
-5. `Proposed`.
-6. Suy luận của coding agent.
-
-Khi thông tin không đủ, không được giả định một yêu cầu là chính thức.
+## 5. Quy tắc AI Service & Bảo mật
+- Giữ kiến trúc đơn giản: `React -> Node.js/Express -> PostgreSQL` và `Node.js/Express -> Python/FastAPI -> External AI API`.
+- `ai-service` (Python/FastAPI) **không** kết nối trực tiếp PostgreSQL; mọi dữ liệu đầu vào phải đi qua Backend kiểm tra quyền và chuẩn hóa.
+- Output từ AI phải có cấu trúc rõ ràng, đánh dấu là nội dung tham khảo hỗ trợ bác sĩ, không khẳng định thay chẩn đoán y khoa.
+- Không commit `.env`, không hard-code API key hoặc password, không log token/mật khẩu ra console.

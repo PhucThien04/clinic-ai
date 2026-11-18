@@ -131,7 +131,7 @@ exports.getAppointments = async (req, res) => {
         d.IdTaiKhoan AS "IdTaiKhoan",
         h.IdHoSoBenhNhan AS "IdHoSoBenhNhan",
         l.IdLichLamViec AS "IdLichLamViec",
-        l.NgayLamViec AS "NgayLamViec",
+        TO_CHAR(l.NgayLamViec, 'YYYY-MM-DD') AS "NgayLamViec",
         l.GioBatDau AS "GioBatDau",
         l.GioKetThuc AS "GioKetThuc",
         p.TenPhongKham AS "TenPhongKham",
@@ -166,53 +166,67 @@ exports.getAppointments = async (req, res) => {
 
 // 3. Hủy lịch khám (Chỉ cho phép trước 6 tiếng)
 exports.cancelAppointment = async (req, res) => {
+  let client;
   try {
+    client = await pool.connect();
+    await client.query('BEGIN');
     const { id } = req.params; // IdChiTietLD
     
     // Lấy thông tin ca làm việc và trạng thái lịch
     const getApptQuery = `
-      SELECT l.NgayLamViec, l.GioBatDau, d.TrangThai 
+      SELECT d.IdLichDat AS "IdLichDat", d.TrangThai AS "TrangThai",
+        EXTRACT(EPOCH FROM ((l.NgayLamViec + l.GioBatDau)
+          AT TIME ZONE 'Asia/Ho_Chi_Minh')) AS "ExamTimestamp"
       FROM CHITIETLICHDAT c
       JOIN LICHLAMVIEC l ON c.IdLichLamViec = l.IdLichLamViec
       JOIN LICHDAT d ON c.IdLichDat = d.IdLichDat
       WHERE c.IdChiTietLD = $1
+      FOR UPDATE OF c, d, l
     `;
-    const apptResult = await pool.query(getApptQuery, [id]);
+    const apptResult = await client.query(getApptQuery, [id]);
     
     if (apptResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: "Không tìm thấy lịch hẹn" });
     }
     
     const appt = apptResult.rows[0];
     
     if (appt.TrangThai === 'Đã hủy') {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: "Lịch hẹn này đã bị hủy trước đó" });
     }
     if (appt.TrangThai !== 'Đã đặt' && appt.TrangThai !== 'Chờ duyệt') {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: "Chỉ có thể hủy lịch hẹn ở trạng thái Đã đặt hoặc Chờ duyệt" });
     }
 
     // Kiểm tra mốc 6 tiếng
-    const examDateStr = appt.NgayLamViec.toISOString().split('T')[0];
-    const examTimeStr = appt.GioBatDau; 
-    const examDateTime = new Date(`${examDateStr}T${examTimeStr}`);
-    const now = new Date();
-    
-    const hoursDiff = (examDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    // Giờ khám theo múi giờ Việt Nam, độc lập múi giờ máy chủ.
+    const examTimestamp = Number(appt.ExamTimestamp);
+    if (appt.ExamTimestamp == null || !Number.isFinite(examTimestamp)) {
+      throw new Error('Thời gian khám không hợp lệ.');
+    }
+    const hoursDiff = (examTimestamp * 1000 - Date.now()) / (1000 * 60 * 60);
 
     if (hoursDiff < 6) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ 
         error: "Chỉ được phép hủy lịch trước giờ khám ít nhất 6 tiếng. Vui lòng liên hệ Hotline." 
       });
     }
 
     // Cập nhật trạng thái
-    await pool.query(`UPDATE LICHDAT SET TrangThai = 'Đã hủy' WHERE IdLichDat = (SELECT IdLichDat FROM CHITIETLICHDAT WHERE IdChiTietLD = $1)`, [id]);
+    await client.query('UPDATE LICHDAT SET TrangThai = $1 WHERE IdLichDat = $2', ['Đã hủy', appt.IdLichDat]);
+    await client.query('COMMIT');
 
     return res.status(200).json({ message: "Hủy lịch khám thành công" });
   } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     console.error("Lỗi khi hủy lịch:", error);
     return res.status(500).json({ error: "Lỗi hệ thống khi hủy lịch" });
+  } finally {
+    if (client) client.release();
   }
 };
 

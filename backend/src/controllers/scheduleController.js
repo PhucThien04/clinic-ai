@@ -54,7 +54,7 @@ exports.getSchedules = async (req, res) => {
         t.HoTen AS "TenBacSi",
         l.IdPhongKham AS "IdPhongKham",
         p.TenPhongKham AS "TenPhongKham",
-        l.NgayLamViec AS "NgayLamViec",
+        TO_CHAR(l.NgayLamViec, 'YYYY-MM-DD') AS "NgayLamViec",
         l.GioBatDau AS "GioBatDau",
         l.GioKetThuc AS "GioKetThuc",
         l.TrangThai AS "TrangThai",
