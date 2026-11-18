@@ -7,6 +7,9 @@ export const formatDate = (dateStr?: string) => {
   return `${day}/${month}/${year}`;
 };
 
+export const getClinicTimestamp = (date: string, time: string) =>
+  Date.parse(`${date}T${time}+07:00`);
+
 export const formatDateTime = (dateStr?: string) => {
   if (!dateStr) return "";
   try {

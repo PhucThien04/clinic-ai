@@ -29,12 +29,13 @@ async function run(controller, action, results, connectionError) {
     require(name) {
       if (name === '../config/db') return pool;
       if (name === '../utils/idGenerator') return {};
+      if (name === '../services/patientProfileService') return {};
       throw new Error(`Unexpected import: ${name}`);
     }
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../src/controllers', controller), 'utf8'), context);
   const response = { status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } };
-  await context.exports[action]({ params: { id: 'CT00000000001' } }, response);
+  await context.exports[action]({ params: { id: 'CT00000000001' }, user: { IdTaiKhoan: 'TK00000000001' } }, response);
   assert.equal(released, !connectionError);
   assert.equal(results.length, 0);
   return { response, queries };

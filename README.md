@@ -45,3 +45,11 @@ clinic-ai/
      ```bash
      cd frontend && npm install && npm run dev
      ```
+
+## 5. Kiểm thử luồng Bệnh nhân
+
+- Backend unit test: tại `backend/`, chạy `npm test`.
+- Backend HTTP/PostgreSQL integration test: tại `backend/`, chạy `npm run test:integration`. Cần cấu hình DB trong `.env` và quyền tạo schema. Bộ test tạo schema `patient_test_*` riêng, sao chép cấu trúc bảng và tự dọn schema sau khi chạy; không sửa bản ghi nghiệp vụ hiện có.
+- Frontend utility test: tại `frontend/`, chạy `node --test tests/patientActions.test.cjs` (Node.js 22.14+).
+- Build frontend: tại `frontend/`, chạy `npm run build`.
+- Trên PowerShell có chặn `npm.ps1`, dùng `npm.cmd` thay cho `npm`.

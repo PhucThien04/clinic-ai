@@ -35,6 +35,8 @@ export default function PatientAppointments(): React.JSX.Element {
     handleBooking,
     cancelAppointment,
     cancelStatus,
+    canEditAppointment, editingAppointment, editSchedules, editScheduleId, setEditScheduleId,
+    editReason, setEditReason, editError, openEditAppointment, closeEditAppointment, saveAppointment,
   } = usePatientBooking();
 
   return (
@@ -226,6 +228,12 @@ export default function PatientAppointments(): React.JSX.Element {
                       </span>
                       <div  className="flex! items-center!">
                         <span className="text-[13px] text-slate-500 font-semibold">Mã: {apt.IdLichDat}</span>
+                        {canEditAppointment(apt) && (
+                          <button type="button" disabled={loading} onClick={() => openEditAppointment(apt)}
+                            className="ml-2 rounded-md border border-sky-600 px-3 py-1.5 text-xs font-semibold text-sky-600 hover:bg-sky-50 disabled:opacity-50">
+                            Đổi lịch
+                          </button>
+                        )}
                         {canCancel && (
                           <button
                             className="[padding:6px_12px] [background:transparent] text-red-500 [border:1px_solid_#fca5a5] rounded-[6px] text-[12px] font-semibold cursor-pointer [transition:all_0.2s] ml-[10px] [&:hover:not(:disabled)]:bg-red-100 [&:hover:not(:disabled)]:border-red-500 [&:disabled]:[opacity:0.5] [&:disabled]:cursor-not-allowed"
@@ -266,6 +274,43 @@ export default function PatientAppointments(): React.JSX.Element {
           )}
         </div>
       </div>
+      {editingAppointment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="edit-appointment-title"
+            className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+            <h2 id="edit-appointment-title" className="text-xl font-bold text-slate-900">Cập nhật lịch khám</h2>
+            <p className="mt-2 text-sm text-slate-600">Chỉ đổi lịch trước giờ khám ít nhất 6 tiếng. Ca mới cũng phải cách hiện tại ít nhất 6 tiếng.</p>
+            <form onSubmit={saveAppointment} className="mt-5 flex flex-col gap-4">
+              <label className="text-sm font-semibold text-slate-700">
+                Ca khám
+                <select autoFocus required value={editScheduleId} onChange={event => setEditScheduleId(event.target.value)}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white p-2.5 focus:border-sky-600">
+                  <option value="">Chọn ca khám</option>
+                  {editSchedules.map(schedule => (
+                    <option key={schedule.IdLichLamViec} value={schedule.IdLichLamViec}>
+                      {formatDate(schedule.NgayLamViec)} · {schedule.GioBatDau.slice(0, 5)} · {schedule.TenBacSi}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm font-semibold text-slate-700">
+                Lý do khám
+                <textarea maxLength={255} value={editReason} onChange={event => setEditReason(event.target.value)}
+                  className="mt-2 min-h-24 w-full rounded-lg border border-slate-200 p-2.5 focus:border-sky-600" />
+              </label>
+              {editError && <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{editError}</p>}
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={closeEditAppointment} disabled={loading}
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-slate-700 disabled:opacity-50">Đóng</button>
+                <button type="submit" disabled={loading || !editScheduleId}
+                  className="rounded-lg bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+                  {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

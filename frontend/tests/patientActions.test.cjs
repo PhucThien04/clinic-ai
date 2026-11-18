@@ -16,7 +16,7 @@ function loadUtility(name) {
   return context.exports;
 }
 
-const { formatDate } = loadUtility('dateUtils.ts');
+const { formatDate, getClinicTimestamp } = loadUtility('dateUtils.ts');
 const { getCancellationErrorMessage, getProfileDeletionErrorMessage } = loadUtility('patientActionErrors.ts');
 const apiError = (status, message) => ({ isAxiosError: true, response: { status, data: { error: message } } });
 
@@ -39,6 +39,11 @@ test('Ngày khám giữ nguyên qua các múi giờ', () => {
 test('Ngày thiếu và ngày đã format không bị đổi', () => {
   assert.equal(formatDate(), '');
   assert.equal(formatDate('19/11/2026'), '19/11/2026');
+});
+
+test('Giờ khám luôn dùng UTC+7 khi kiểm tra điều kiện đổi lịch', () => {
+  assert.equal(getClinicTimestamp('2026-11-19', '13:00:00'), Date.parse('2026-11-19T06:00:00Z'));
+  assert.equal(getClinicTimestamp('2026-11-19', '00:00:00'), Date.parse('2026-11-18T17:00:00Z'));
 });
 
 test('Hủy sát giờ có thông báo thân thiện', () => {

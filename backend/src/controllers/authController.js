@@ -2,9 +2,11 @@ const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { generateId } = require('../utils/idGenerator');
+const { ensureSelfProfile } = require('../services/patientProfileService');
 
 // 1. Đăng ký tài khoản
 exports.register = async (req, res) => {
+  let client;
   try {
     const {
       TenTaiKhoan,
@@ -15,12 +17,12 @@ exports.register = async (req, res) => {
       GioiTinh,
       Email,
       SoDienThoai,
-      DiaChi,
-      VaiTro
+      DiaChi
     } = req.body;
+    const VaiTro = 'Bệnh nhân';
 
     // Kiểm tra các trường bắt buộc cơ bản
-    if (!TenTaiKhoan || !MatKhau || !HoTen || !CCCD || !SoDienThoai || !VaiTro) {
+    if (!TenTaiKhoan || !MatKhau || !HoTen || !CCCD || !SoDienThoai) {
       return res.status(400).json({ error: 'Vui lòng điền đầy đủ các thông tin bắt buộc!' });
     }
 
@@ -44,7 +46,8 @@ exports.register = async (req, res) => {
     const query = `
       INSERT INTO TAIKHOAN (IdTaiKhoan, TenTaiKhoan, MatKhau, HoTen, CCCD, NgaySinh, GioiTinh, Email, SoDienThoai, DiaChi, TrangThai, VaiTro)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING IdTaiKhoan, TenTaiKhoan, HoTen, VaiTro, TrangThai
+      RETURNING IdTaiKhoan AS "IdTaiKhoan", TenTaiKhoan AS "TenTaiKhoan",
+        HoTen AS "HoTen", VaiTro AS "VaiTro", TrangThai AS "TrangThai"
     `;
 
     const values = [
@@ -62,7 +65,11 @@ exports.register = async (req, res) => {
       VaiTro
     ];
 
-    const newUser = await pool.query(query, values);
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const newUser = await client.query(query, values);
+    await ensureSelfProfile(client, idTaiKhoan);
+    await client.query('COMMIT');
 
     return res.status(201).json({
       message: 'Đăng ký tài khoản thành công!',
@@ -70,8 +77,12 @@ exports.register = async (req, res) => {
     });
 
   } catch (err) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
+    if (err.code === '23505') return res.status(409).json({ error: 'Thông tin tài khoản đã được sử dụng.' });
     console.error('Lỗi khi đăng ký:', err);
     return res.status(500).json({ error: 'Lỗi server nội bộ.' });
+  } finally {
+    if (client) client.release();
   }
 };
 
@@ -92,7 +103,7 @@ exports.login = async (req, res) => {
         MatKhau AS "MatKhau", 
         HoTen AS "HoTen", 
         VaiTro AS "VaiTro", 
-        Email AS "Email" 
+        Email AS "Email", TrangThai AS "TrangThai"
       FROM TAIKHOAN 
       WHERE TenTaiKhoan = $1`, 
       [TenTaiKhoan]
@@ -108,6 +119,23 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(MatKhau, user.MatKhau);
     if (!isMatch) {
       return res.status(401).json({ error: 'Tên tài khoản hoặc mật khẩu không chính xác!' });
+    }
+
+    if (user.TrangThai !== 'Hoạt động') {
+      return res.status(403).json({ error: 'Tài khoản đã bị khóa. Vui lòng liên hệ phòng khám.' });
+    }
+    if (user.VaiTro === 'Bệnh nhân') {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await ensureSelfProfile(client, user.IdTaiKhoan);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
     }
 
     // Tạo JWT Token

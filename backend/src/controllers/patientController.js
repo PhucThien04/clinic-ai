@@ -1,10 +1,12 @@
 const pool = require('../config/db');
 const { generateId } = require('../utils/idGenerator');
+const { ensureSelfProfile } = require('../services/patientProfileService');
 
 // 1. Tạo hồ sơ bệnh nhân (Bản thân hoặc Người thân)
 exports.createPatientProfile = async (req, res) => {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     const {
@@ -24,8 +26,15 @@ exports.createPatientProfile = async (req, res) => {
       NguoiThan
     } = req.body;
 
-    if (!IdTaiKhoan || LoaiThongTin === undefined) {
-      return res.status(400).json({ error: 'Thiếu thông tin tài khoản hoặc loại thông tin hồ sơ!' });
+    if (!IdTaiKhoan || ![0, 1].includes(LoaiThongTin)
+        || (LoaiThongTin === 1 && (!NguoiThan?.HoTen?.trim() || !NguoiThan?.MoiQuanHe?.trim()))) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Vui lòng cung cấp loại hồ sơ hợp lệ, họ tên và quan hệ người thân.' });
+    }
+    if (LoaiThongTin === 0) {
+      const id = await ensureSelfProfile(client, req.user.IdTaiKhoan);
+      await client.query('COMMIT');
+      return res.status(200).json({ message: 'Hồ sơ bản thân đã sẵn sàng.', hoso: { IdHoSoBenhNhan: id, LoaiThongTin: 0 } });
     }
 
     const idHoSoBenhNhan = generateId('HS'); // Chuẩn 13 ký tự
@@ -84,18 +93,18 @@ exports.createPatientProfile = async (req, res) => {
     });
 
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK').catch(() => {});
     console.error('Lỗi khi tạo hồ sơ bệnh nhân:', err);
     return res.status(500).json({ error: 'Lỗi server nội bộ.' });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 };
 
 // 2. Lấy danh sách hồ sơ bệnh nhân (gom duy nhất 1 thẻ cho mỗi người)
 exports.getPatientProfiles = async (req, res) => {
   try {
-    const { idTaiKhoan } = req.query;
+    const idTaiKhoan = req.user.IdTaiKhoan;
     if (!idTaiKhoan) {
       return res.status(400).json({ error: "Thiếu mã tài khoản yêu cầu!" });
     }

@@ -225,8 +225,13 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 ## 6. Danh sách REST API Endpoints (Backend Port `5000`)
 
 - **Auth (`/api/auth`):** `POST /register`, `POST /login`
+  - Đăng ký công khai luôn tạo vai trò `Bệnh nhân`, bỏ qua `VaiTro` do client gửi. Tài khoản và hồ sơ bản thân (`LoaiThongTin = 0`) được tạo trong cùng transaction.
+  - Đăng nhập chặn tài khoản không ở trạng thái `Hoạt động` (`403`). Bệnh nhân cũ chưa có hồ sơ bản thân được tự tạo hồ sơ trước khi nhận token; khóa dòng tài khoản tránh tạo trùng khi đăng nhập đồng thời.
 - **Profile (`/api/profile`):** `GET /:idTaiKhoan`, `PUT /:idTaiKhoan`
 - **Patients (`/api/patients`):**
+  - Tất cả endpoint yêu cầu Bearer JWT hợp lệ (`401` nếu thiếu/sai/hết hạn). Chỉ được truy cập hồ sơ, người thân, tiền sử và lịch sử khám thuộc `IdTaiKhoan` trong token; truy cập chéo tài khoản trả `403`, dữ liệu không tồn tại trả `404`.
+  - `GET /profiles` mặc định lấy tài khoản trong token; tham số `idTaiKhoan` cũ chỉ được dùng khi trùng tài khoản đó. `POST /profiles` lấy chủ hồ sơ từ token; loại `0` trả hồ sơ bản thân sẵn có hoặc tạo mới, loại `1` yêu cầu họ tên/quan hệ người thân.
+  - `POST /histories` lấy `NguoiGhiNhan` từ token; nếu có `IdChiTietLD`, lượt khám phải thuộc đúng hồ sơ và tài khoản hiện tại.
   - `GET /profiles?idTaiKhoan=...`, `POST /profiles`, `DELETE /profiles/:idHoSo`
   - `GET /relatives?idHoSoBenhNhan=...`, `PUT /relatives`
   - `GET /histories?idHoSoBenhNhan=...`, `POST /histories`, `PUT /histories/:idTienSu`, `DELETE /histories/:idTienSu`
@@ -234,6 +239,9 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 - **Schedules (`/api/schedules`):** `GET /`, `POST /`, `PUT /:id`
   - `NgayLamViec` trong kết quả `GET /api/schedules` và `GET /api/appointments` là chuỗi ngày `YYYY-MM-DD`, không kèm múi giờ. Frontend giữ nguyên ngày lịch khi chọn/lọc/hiển thị, không chuyển ngày này qua UTC/Local.
 - **Appointments (`/api/appointments`):** `GET /`, `GET /all`, `POST /`, `PUT /:id`, `PUT /:id/cancel`
+  - Tất cả endpoint yêu cầu JWT. Danh sách/thao tác lịch chỉ thuộc tài khoản trong token; không nhận tài khoản khác từ request. `GET /all` chỉ trả các `IdLichLamViec` đã kín chỗ, không trả ID lịch đặt, tài khoản hoặc hồ sơ của người khác.
+  - `POST /`: hồ sơ phải thuộc người đăng nhập; ca khám phải tồn tại, `Hoạt động`, chưa bắt đầu và chưa kín chỗ. Khóa dòng ca khám trong transaction trước khi kiểm tra chỗ trống để ngăn đặt trùng đồng thời. Ca quá hạn/tạm ngưng trả `400`; ca kín chỗ trả `409`.
+  - `PUT /:id`: `id` là `IdChiTietLD`; cho phép cập nhật `IdLichLamViec`, `LiDoKham`, `GhiChu` khi trạng thái `Đã đặt` hoặc `Chờ duyệt` và lịch cũ còn ít nhất 6 tiếng. Ca mới cũng phải còn ít nhất 6 tiếng, đang hoạt động và trống (bỏ qua chính lịch đang sửa). Cập nhật trong transaction; không thay hồ sơ hoặc ghi đè dữ liệu lâm sàng. Trả `400` khi sai trạng thái/quá hạn, `409` khi ca kín chỗ.
   - `PUT /:id/cancel`: `id` là `IdChiTietLD`; chỉ hủy trạng thái `Đã đặt` hoặc `Chờ duyệt`, trước giờ khám ít nhất 6 tiếng (giờ Việt Nam). Trả `400` khi sai trạng thái/quá hạn, `404` khi không tìm thấy.
 - **Quy tắc xóa hồ sơ:** `DELETE /api/patients/profiles/:idHoSo` xóa hồ sơ chưa gắn lịch khám và chưa có chẩn đoán/kết luận, cùng dữ liệu `THONGTINNGUOITHAN`, `TIENSUBENH` trong một transaction. Trả `404` nếu không tồn tại; `409` nếu đã gắn lịch khám, có chẩn đoán/kết luận hoặc còn ràng buộc dữ liệu, nhằm bảo toàn lịch sử khám và kết quả AI.
 - **Examinations (`/api/examinations`):** `PUT /vitals`, `PUT /diagnosis`

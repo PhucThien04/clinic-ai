@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import API from "../services/api";
+import { isAxiosError } from "axios";
+import { patientService } from "../services/patientService";
+import { getClinicTimestamp } from "../utils/dateUtils";
 import { authService } from "../services/authService";
 import { appointmentService } from "../services/appointmentService";
 import { getCancellationErrorMessage } from "../utils/patientActionErrors";
@@ -27,6 +29,7 @@ export interface AppointmentItem {
   LiDoKham: string;
   TrangThai: string;
   IdLichLamViec?: string;
+  IdHoSoBenhNhan: string;
 }
 
 export interface PatientProfile {
@@ -62,6 +65,10 @@ export const usePatientBooking = () => {
     msg: string;
   }>({ id: "", type: "success", msg: "" });
   const [loading, setLoading] = useState<boolean>(false);
+  const [editingAppointment, setEditingAppointment] = useState<AppointmentItem | null>(null);
+  const [editScheduleId, setEditScheduleId] = useState('');
+  const [editReason, setEditReason] = useState('');
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     if (location.state && (location.state as any).defaultReason) {
@@ -73,10 +80,10 @@ export const usePatientBooking = () => {
     if (!currentUser) return;
     try {
       const [resSched, resApt, resProf, resAllApt] = await Promise.all([
-        API.get("/schedules"),
-        API.get(`/appointments?idTaiKhoan=${currentUser.IdTaiKhoan}`),
-        API.get(`/patients/profiles?idTaiKhoan=${currentUser.IdTaiKhoan}`),
-        API.get("/appointments/all").catch(() => ({ data: [] })),
+        appointmentService.getSchedules(),
+        appointmentService.getAppointments(),
+        patientService.getProfiles(),
+        appointmentService.getOccupiedSchedules(),
       ]);
 
       setSchedules(resSched.data || []);
@@ -127,8 +134,10 @@ export const usePatientBooking = () => {
   }, [liDoKham]);
 
   const relevantSchedules = useMemo(() => {
-    if (!filterKeyword) return schedules;
-    return schedules.filter((s) => {
+    const activeSchedules = schedules.filter(s => s.TrangThai === 'Hoạt động'
+      && getClinicTimestamp(s.NgayLamViec, s.GioBatDau) > Date.now());
+    if (!filterKeyword) return activeSchedules;
+    return activeSchedules.filter((s) => {
       const note = (s.GhiChu || "").toLowerCase();
       const cleanNote = note
         .replace(/^(sự kiện:|chuyên sâu:|dịch vụ:)\s*/i, "")
@@ -176,12 +185,10 @@ export const usePatientBooking = () => {
     setLoading(true);
 
     try {
-      await API.post("/appointments", {
-        IdTaiKhoan: currentUser!.IdTaiKhoan,
+      await appointmentService.createAppointment({
         IdHoSoBenhNhan: selectedProfile,
         IdLichLamViec: selectedScheduleId,
         LiDoKham: liDoKham,
-        GhiChu: "",
       });
 
       setStatus({ type: "success", msg: "Đặt lịch khám thành công!" });
@@ -192,6 +199,44 @@ export const usePatientBooking = () => {
         type: "error",
         msg: err.response?.data?.error || "Lỗi khi đặt lịch khám!",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canEditAppointment = (appointment: AppointmentItem) =>
+    ['Đã đặt', 'Chờ duyệt'].includes(appointment.TrangThai)
+    && getClinicTimestamp(appointment.NgayLamViec, appointment.GioBatDau) - Date.now() >= 6 * 60 * 60 * 1000;
+
+  const editSchedules = schedules.filter(schedule => schedule.TrangThai === 'Hoạt động'
+    && getClinicTimestamp(schedule.NgayLamViec, schedule.GioBatDau) - Date.now() >= 6 * 60 * 60 * 1000
+    && (!bookedScheduleIds.has(schedule.IdLichLamViec) || schedule.IdLichLamViec === editingAppointment?.IdLichLamViec));
+
+  const openEditAppointment = (appointment: AppointmentItem) => {
+    setEditingAppointment(appointment);
+    setEditScheduleId(appointment.IdLichLamViec || '');
+    setEditReason(appointment.LiDoKham || '');
+    setEditError('');
+  };
+
+  const closeEditAppointment = () => { if (!loading) setEditingAppointment(null); };
+
+  const saveAppointment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingAppointment || !editScheduleId) return;
+    setLoading(true);
+    setEditError('');
+    try {
+      await appointmentService.updateAppointment(editingAppointment.IdChiTietLD, {
+        IdLichLamViec: editScheduleId, LiDoKham: editReason,
+      });
+      setEditingAppointment(null);
+      setStatus({ type: 'success', msg: 'Cập nhật lịch khám thành công!' });
+      await fetchData();
+    } catch (error: unknown) {
+      setEditError(isAxiosError<{ error?: string }>(error)
+        ? error.response?.data?.error || 'Không thể đổi lịch. Vui lòng thử lại.'
+        : 'Không thể đổi lịch. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -252,5 +297,7 @@ export const usePatientBooking = () => {
     handleBooking,
     cancelAppointment,
     cancelStatus,
+    canEditAppointment, editingAppointment, editSchedules, editScheduleId, setEditScheduleId,
+    editReason, setEditReason, editError, openEditAppointment, closeEditAppointment, saveAppointment,
   };
 };
