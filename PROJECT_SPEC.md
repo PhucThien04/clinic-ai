@@ -1,7 +1,9 @@
 # Clinic AI — Đặc tả Kỹ thuật & Nghiệp vụ Dự án (Single Source of Truth)
 
-**Phiên bản:** 2.1 (Tailwind CSS Baseline)  
-**Cập nhật:** 16/11/2026  
+**Phiên bản:** 2.2 (Docker PostgreSQL & cấu trúc workspace)
+
+**Cập nhật:** 18/11/2026
+
 **Đề tài:** Xây dựng hệ thống quản lý phòng khám nha khoa Đức Tín, tích hợp AI tóm tắt và phân tích hồ sơ bệnh nhân.  
 **Đơn vị:** Khoa Công nghệ Số — Trường Đại học Sư phạm Kỹ thuật - ĐHĐN  
 **Sinh viên thực hiện:** Nguyễn Phúc Thiên (MSV: 22115053122343 — Lớp: 22T3)  
@@ -84,19 +86,96 @@ Hệ thống gồm **7 tác nhân** với phân quyền chặt chẽ ở Backend
 ## 4. Kiến trúc & Công nghệ Hệ thống
 
 ```text
-React Frontend (TypeScript + React Router + Axios + Tailwind CSS)
+React Frontend trên host (TypeScript + Vite + Tailwind CSS v4)
        │ REST API (JSON + JWT)
        ▼
-Node.js / Express Backend ───── HTTP ───── Python / FastAPI AI Service
+Node.js / Express Backend trên host ── HTTP ── Python / FastAPI (dự kiến)
        │                                           │
        ▼                                           ▼
-  PostgreSQL                                External AI API
+PostgreSQL 15 trong Docker                   External AI API (dự kiến)
 ```
 
-- **Frontend:** React, TypeScript, React Router, Axios, Lucide React, Tailwind CSS.
-- **Backend:** Node.js, Express.js (trung tâm xử lý nghiệp vụ, xác thực JWT, kiểm tra quyền truy cập, chuẩn hóa dữ liệu gửi sang AI Service).
-- **AI Service:** Python, FastAPI (giao tiếp với External AI Provider; **tuyệt đối không** truy cập trực tiếp PostgreSQL).
-- **Database:** PostgreSQL.
+- **Frontend:** React 19, TypeScript, Vite 8, React Router, Axios, Lucide React và **Tailwind CSS v4**. `@tailwindcss/vite` được đăng ký trong `frontend/vite.config.ts`; entry CSS là `frontend/src/index.css` với `@import "tailwindcss";`.
+- **Backend:** Node.js, Express 5, `pg`, JWT (`jsonwebtoken`), bcrypt, dotenv và nodemon. Backend xử lý nghiệp vụ, kiểm tra quyền và truy cập PostgreSQL qua `backend/src/config/db.js`.
+- **AI Service dự kiến:** Python/FastAPI, giao tiếp External AI Provider; **tuyệt đối không** truy cập trực tiếp PostgreSQL. `ai-service/` hiện rỗng, chưa có mã FastAPI, `requirements.txt` hoặc luồng gọi External AI API. Các chức năng AI trong đặc tả là yêu cầu đích, không đồng nghĩa đã triển khai xong.
+- **Database:** PostgreSQL 15 trong Docker, image `postgres:15`. Môi trường đã kiểm tra có container `datn`, publish cổng host `5432`, lưu dữ liệu ở Docker volume gắn tại `/var/lib/postgresql/data`. Backend chạy trên host dùng `DB_HOST=localhost`, `DB_PORT=5432`; chưa có Dockerfile hoặc Docker Compose trong repo.
+
+### 4.1. Clean Code & phân lớp Frontend
+
+- `services/`: các hàm HTTP qua Axios; không gọi API trực tiếp từ Page/Component khi tạo mới hoặc refactor.
+- `hooks/`: state, side-effect và nghiệp vụ của tính năng.
+- `utils/`: hàm thuần như format ngày lịch, validation và ánh xạ thông báo lỗi.
+- `pages/`, `components/`: render JSX và nhận dữ liệu/hành động từ Hook. Dùng `import type` với TypeScript type/interface khi bật `verbatimModuleSyntax`.
+- Tailwind CSS v4 utility classes trong JSX; không tạo CSS riêng cho Page/Component. Giữ `index.css` làm entry Tailwind. Hệ màu `sky-600`, `teal-600`, nền `slate-50`, viền `slate-200`, cảnh báo `amber`; sidebar `DashboardLayout` giữ `h-screen sticky top-0`.
+
+### 4.2. MVC với Backend REST API
+
+View nằm ở React; Express dùng luồng `Route -> Middleware -> Controller -> Service/pg -> PostgreSQL`. Routes đăng ký endpoint; Middleware xác thực, kiểm tra quyền; Controller điều phối HTTP và transaction; Services chứa nghiệp vụ dùng chung; `config/db.js` quản lý Pool; Utils chứa hàm thuần và sinh ID.
+
+Workspace hiện **chưa có `backend/src/models/`**; SQL đang nằm trong Controller/Service. Đây là cách phân lớp theo MVC cho REST API tách Frontend, chưa phải MVC đã tách Model đầy đủ. Khi phát triển tiếp, tách nghiệp vụ dùng chung vào Service, giữ SQL parameterized, alias PascalCase và transaction; chỉ bổ sung tầng Model khi có thay đổi mã thực tế và cập nhật tài liệu cùng phiên. Các quy tắc này là chuẩn áp dụng cho thay đổi mới/refactor, không khẳng định toàn bộ mã cũ đã tuân thủ.
+
+### 4.3. Cấu trúc workspace thực tế
+
+Sơ đồ các thư mục nguồn và tệp cấu hình chính bên dưới đồng bộ với README; lược bỏ `.git/`, `node_modules/`, `dist/` và `backend/.env`.
+
+```text
+clinic-ai/
+├── .ai-workflow/             # Thư mục cục bộ đang rỗng
+├── ai-service/               # Đang rỗng; dành cho Python/FastAPI dự kiến
+├── backend/
+│   ├── src/
+│   │   ├── config/           # db.js: PostgreSQL Pool qua pg
+│   │   ├── controllers/      # Controller REST API; hiện còn chứa SQL
+│   │   ├── middlewares/     # JWT và quyền sở hữu dữ liệu
+│   │   ├── routes/          # Đăng ký endpoint Express
+│   │   ├── services/        # Nghiệp vụ dùng chung, tạo hồ sơ bản thân
+│   │   ├── utils/           # Sinh ID CHAR(13)
+│   │   └── server.js        # Entry point Backend
+│   ├── tests/               # Unit test và HTTP/PostgreSQL integration test
+│   ├── .env.example         # Mẫu cấu hình Backend có nội dung
+│   ├── package.json
+│   ├── package-lock.json
+│   └── test.http            # Request mẫu
+├── frontend/
+│   ├── public/              # Tài nguyên tĩnh
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── pages/           # auth, doctor, home, nurse, patient
+│   │   ├── services/
+│   │   ├── utils/
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   └── index.css        # Entry CSS Tailwind v4
+│   ├── tests/               # Kiểm thử ngày tháng/thông báo lỗi
+│   ├── .gitignore
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── README.md            # Tài liệu Frontend
+│   ├── tsconfig.json
+│   ├── tsconfig.app.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── .env.example             # Tệp gốc hiện rỗng, chưa dùng để chạy Backend
+├── .gitignore
+├── AGENTS.md
+├── PROJECT_SPEC.md
+└── README.md
+```
+
+Không có `database/` hoặc `docs/` trong workspace. `.ai-workflow/` và `ai-service/` đang rỗng, có thể không xuất hiện khi clone vì Git không lưu thư mục rỗng. `.env.example` tại gốc hiện rỗng; mẫu cấu hình Backend có nội dung là `backend/.env.example`.
+
+### 4.4. Khởi tạo môi trường Development
+
+1. Chuẩn bị Node.js **22.14+**, npm và Docker Desktop với Linux containers. Vite đang cài đặt chấp nhận Node.js `^20.19.0 || >=22.12.0`; mốc 22.14+ cũng đáp ứng utility test. Python chỉ cần khi bắt đầu triển khai FastAPI.
+2. Kiểm tra container PostgreSQL bằng `docker ps -a`; nếu container `datn` đã có nhưng dừng, dùng `docker start datn`. Kiểm tra sẵn sàng bằng `docker exec datn pg_isready -U postgres -d clinic_duc_tin`. Hướng dẫn tạo container PostgreSQL 15 mới và volume riêng nằm trong [README, mục 4.1](./README.md#41-postgresql-qua-docker).
+3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo hiện chưa có SQL bootstrap, migration hoặc seed. Giữ schema đang có trên môi trường hiện tại; với môi trường mới, nhập SQL schema/dump đã chuẩn bị theo mục 5 bên dưới bằng `psql` trong container. Không hướng dẫn chạy script từ thư mục `database/` không tồn tại.
+4. Nếu chưa có `backend/.env`, sao chép `backend/.env.example` vào đó rồi điền `PORT`, `DB_USER`, `DB_HOST`, `DB_NAME`, `DB_PASSWORD`, `DB_PORT`, `JWT_SECRET`. Mặc định database `clinic_duc_tin`; mật khẩu phải khớp cấu hình PostgreSQL. Chạy Backend từ `backend/` để dotenv đọc đúng tệp. Nếu sau này Backend chạy trong Docker, dùng tên dịch vụ/container DB trên cùng network làm `DB_HOST`.
+5. Tại `backend/`, chạy `npm ci` rồi `npm run dev` (Express `http://localhost:5000`). Tại terminal khác trong `frontend/`, chạy `npm ci` rồi `npm run dev` (Vite thường `http://localhost:5173`). Axios hiện dùng `http://localhost:5000/api`.
+6. Chưa có lệnh khởi động AI Service có thể thực thi trong repo. Chỉ thêm hướng dẫn pip/uvicorn sau khi có dependency và entry point FastAPI thật. Trên PowerShell chặn `npm.ps1`, dùng `npm.cmd`.
 
 ---
 
@@ -224,10 +303,12 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 
 ## 6. Danh sách REST API Endpoints (Backend Port `5000`)
 
+Danh sách dưới đây giữ phạm vi API của đồ án. Đối chiếu Routes hiện tại: `PUT /api/schedules/:id`, `GET /api/clinic/info`, `PUT /api/clinic/services/:id`, `PUT /api/clinic/events/:id` và `POST /api/ai/analyze` là **endpoint dự kiến, chưa đăng ký trong mã nguồn**. Không dùng các endpoint này làm bước xác minh dịch vụ đã chạy. AI hiện chỉ có API lưu/đọc kết quả tại Backend.
+
 - **Auth (`/api/auth`):** `POST /register`, `POST /login`
   - Đăng ký công khai luôn tạo vai trò `Bệnh nhân`, bỏ qua `VaiTro` do client gửi. Tài khoản và hồ sơ bản thân (`LoaiThongTin = 0`) được tạo trong cùng transaction.
   - Đăng nhập chặn tài khoản không ở trạng thái `Hoạt động` (`403`). Bệnh nhân cũ chưa có hồ sơ bản thân được tự tạo hồ sơ trước khi nhận token; khóa dòng tài khoản tránh tạo trùng khi đăng nhập đồng thời.
-- **Profile (`/api/profile`):** `GET /:idTaiKhoan`, `PUT /:idTaiKhoan`
+- **Profile (`/api/profile`):** `GET /`, `PUT /` (đường dẫn hiện tại; tài khoản lấy từ JWT, không có tham số `:idTaiKhoan`)
 - **Patients (`/api/patients`):**
   - Tất cả endpoint yêu cầu Bearer JWT hợp lệ (`401` nếu thiếu/sai/hết hạn). Chỉ được truy cập hồ sơ, người thân, tiền sử và lịch sử khám thuộc `IdTaiKhoan` trong token; truy cập chéo tài khoản trả `403`, dữ liệu không tồn tại trả `404`.
   - `GET /profiles` mặc định lấy tài khoản trong token; tham số `idTaiKhoan` cũ chỉ được dùng khi trùng tài khoản đó. `POST /profiles` lấy chủ hồ sơ từ token; loại `0` trả hồ sơ bản thân sẵn có hoặc tạo mới, loại `1` yêu cầu họ tên/quan hệ người thân.
