@@ -49,7 +49,7 @@ clinic-ai/
 │   │   ├── assets/
 │   │   ├── components/
 │   │   ├── hooks/
-│   │   ├── pages/           # auth, doctor, home, nurse, patient
+│   │   ├── pages/           # admin, auth, doctor, home, nurse, owner, patient, staff
 │   │   ├── services/
 │   │   ├── utils/
 │   │   ├── App.tsx

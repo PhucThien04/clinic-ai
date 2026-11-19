@@ -43,7 +43,7 @@ export function useNurseExam() {
     finally { setSaving(false); }
   };
   const canSave = !!patient.patientRecord?.IdChiTietLD
-    && !['Đã hủy', 'Hoàn thành'].includes(patient.patientRecord.TrangThaiLich || '');
+    && ['Đã xác nhận', 'Đang khám'].includes(patient.patientRecord.TrangThaiLich || '');
   return { ...clinicalQueue, ...patient, vitals, setVitals, saving, saveError, saveMessage, canSave,
     selectPatient, handleSubmitVitals, handleClosePatient };
 }

@@ -39,7 +39,7 @@ exports.getClinicalQueue = async ({ date, all, idBacSi }) => {
     JOIN TAIKHOAN tk ON tk.IdTaiKhoan = h.IdTaiKhoan JOIN TAIKHOAN bs ON bs.IdTaiKhoan = l.IdBacSi
     JOIN PHONGKHAM pk ON pk.IdPhongKham = l.IdPhongKham
     LEFT JOIN THONGTINNGUOITHAN nt ON nt.IdHoSoBenhNhan = h.IdHoSoBenhNhan
-    WHERE d.TrangThai <> 'Đã hủy'
+    WHERE d.TrangThai IN ('Đã xác nhận', 'Đang khám', 'Hoàn thành')
       AND ($2::boolean OR l.NgayLamViec = COALESCE($1::date, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date))
     ORDER BY "LaCaCuaToi" DESC, l.NgayLamViec, l.GioBatDau, c.IdChiTietLD`, [date || null, all, idBacSi || null]);
   return result.rows;
@@ -94,6 +94,9 @@ exports.saveExam = async (id, fields, diagnosis) => {
     if (!visit.rows.length) throw Object.assign(new Error('Không tìm thấy hồ sơ có lịch khám.'), { status: 404 });
     if (visit.rows.length !== 1) throw Object.assign(new Error('Hồ sơ liên kết nhiều lượt khám, cần kiểm tra trước khi cập nhật.'), { status: 409 });
     const state = visit.rows[0].TrangThaiLich;
+    if (!diagnosis && !['Đã xác nhận', 'Đang khám'].includes(state)) {
+      throw Object.assign(new Error(state === 'Đã đặt' ? 'Lịch hẹn chưa được nhân viên xác nhận.' : 'Lượt khám không ở trạng thái cho phép đo sinh hiệu.'), { status: 409 });
+    }
     if (state === 'Đã hủy' || (!diagnosis && state === 'Hoàn thành')) {
       throw Object.assign(new Error('Không thể cập nhật sinh hiệu/lâm sàng cho lượt khám đã hủy hoặc đã hoàn thành.'), { status: 409 });
     }
@@ -107,7 +110,7 @@ exports.saveExam = async (id, fields, diagnosis) => {
       WHERE IdHoSoBenhNhan = $${values.length} RETURNING ${selectProfile('HOSOBENHNHAN')}`, values);
     await client.query(diagnosis
       ? `UPDATE LICHDAT SET TrangThai = 'Hoàn thành' WHERE IdLichDat = $1 AND TrangThai <> 'Đã hủy'`
-      : `UPDATE LICHDAT SET TrangThai = 'Đang khám' WHERE IdLichDat = $1 AND TrangThai IN ('Đã đặt', 'Đã xác nhận')`,
+      : `UPDATE LICHDAT SET TrangThai = 'Đang khám' WHERE IdLichDat = $1 AND TrangThai = 'Đã xác nhận'`,
     [visit.rows[0].IdLichDat]);
     await client.query('COMMIT');
     return updated.rows[0];

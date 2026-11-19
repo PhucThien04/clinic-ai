@@ -1,8 +1,8 @@
 # Clinic AI — Đặc tả Kỹ thuật & Nghiệp vụ Dự án (Single Source of Truth)
 
-**Phiên bản:** 2.2 (Docker PostgreSQL & cấu trúc workspace)
+**Phiên bản:** 2.3 (Luồng Nhân viên, Admin và Chủ phòng khám)
 
-**Cập nhật:** 18/11/2026
+**Cập nhật:** 19/11/2026
 
 **Đề tài:** Xây dựng hệ thống quản lý phòng khám nha khoa Đức Tín, tích hợp AI tóm tắt và phân tích hồ sơ bệnh nhân.  
 **Đơn vị:** Khoa Công nghệ Số — Trường Đại học Sư phạm Kỹ thuật - ĐHĐN  
@@ -140,7 +140,7 @@ clinic-ai/
 │   │   ├── assets/
 │   │   ├── components/
 │   │   ├── hooks/
-│   │   ├── pages/           # auth, doctor, home, nurse, patient
+│   │   ├── pages/           # admin, auth, doctor, home, nurse, owner, patient, staff
 │   │   ├── services/
 │   │   ├── utils/
 │   │   ├── App.tsx
@@ -231,8 +231,8 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 | | `TieuDe` | `VARCHAR(255)` | `NOT NULL` | Tiêu đề sự kiện / ưu đãi |
 | | `NoiDung` | `TEXT` | `NOT NULL` | Nội dung chi tiết |
 | | `TrangThai` | `VARCHAR(50)` | `NOT NULL` | `Hiển thị`, `Ẩn` |
-| | `ThoiGianBatDau` | `TIME` | `NULL` | Giờ bắt đầu áp dụng |
-| | `ThoiGianKetThuc` | `TIME` | `NULL` | Giờ kết thúc áp dụng |
+| | `ThoiGianBatDau` | `TIMESTAMP` | `NULL` | Ngày giờ bắt đầu áp dụng (khớp PostgreSQL hiện tại) |
+| | `ThoiGianKetThuc` | `TIMESTAMP` | `NULL` | Ngày giờ kết thúc áp dụng (khớp PostgreSQL hiện tại) |
 | **DICHVU** | `IdDichVu` | `CHAR(13)` | `PK, NOT NULL` | Mã dịch vụ (`DV...`) |
 | | `IdPhongKham` | `CHAR(13)` | `FK -> PHONGKHAM, NOT NULL` | Mã phòng khám |
 | | `TenDichVu` | `VARCHAR(255)` | `NOT NULL` | Tên dịch vụ nha khoa |
@@ -301,11 +301,12 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 
 ## 6. Danh sách REST API Endpoints (Backend Port `5000`)
 
-Danh sách dưới đây giữ phạm vi API của đồ án. Đối chiếu Routes hiện tại: `PUT /api/schedules/:id`, `GET /api/clinic/info`, `PUT /api/clinic/services/:id`, `PUT /api/clinic/events/:id` và `POST /api/ai/analyze` là **endpoint dự kiến, chưa đăng ký trong mã nguồn**. Không dùng các endpoint này làm bước xác minh dịch vụ đã chạy. AI hiện chỉ có API lưu/đọc kết quả tại Backend.
+Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng khám, dịch vụ và sự kiện bên dưới đã được đăng ký trong mã nguồn. `POST /api/ai/analyze` vẫn là **endpoint dự kiến**; AI hiện chỉ có API lưu/đọc kết quả tại Backend.
 
 - **Auth (`/api/auth`):** `POST /register`, `POST /login`
   - Đăng ký công khai luôn tạo vai trò `Bệnh nhân`, bỏ qua `VaiTro` do client gửi. Tài khoản và hồ sơ bản thân (`LoaiThongTin = 0`) được tạo trong cùng transaction.
   - Đăng nhập chặn tài khoản không ở trạng thái `Hoạt động` (`403`). Bệnh nhân cũ chưa có hồ sơ bản thân được tự tạo hồ sơ trước khi nhận token; khóa dòng tài khoản tránh tạo trùng khi đăng nhập đồng thời.
+  - `verifyToken` đọc lại vai trò/trạng thái từ DB sau khi kiểm tra JWT để thao tác khóa/đổi vai trò có hiệu lực với token đã cấp. Tài khoản bị khóa/không tồn tại trả `403`; DB không khả dụng khi xác thực trả `503`.
 - **Profile (`/api/profile`):** `GET /`, `PUT /` (đường dẫn hiện tại; tài khoản lấy từ JWT, không có tham số `:idTaiKhoan`)
 - **Patients (`/api/patients`):**
   - Tất cả endpoint yêu cầu Bearer JWT hợp lệ (`401` nếu thiếu/sai/hết hạn). Chỉ được truy cập hồ sơ, người thân, tiền sử và lịch sử khám thuộc `IdTaiKhoan` trong token; truy cập chéo tài khoản trả `403`, dữ liệu không tồn tại trả `404`.
@@ -315,22 +316,35 @@ Danh sách dưới đây giữ phạm vi API của đồ án. Đối chiếu Rou
   - `GET /relatives?idHoSoBenhNhan=...`, `PUT /relatives`
   - `GET /histories?idHoSoBenhNhan=...`, `POST /histories`, `PUT /histories/:idTienSu`, `DELETE /histories/:idTienSu`
   - `GET /exam-histories?idHoSoBenhNhan=...` (Lịch sử khám lâm sàng qua các đợt)
-- **Schedules (`/api/schedules`):** `GET /`, `POST /`, `PUT /:id`
+- **Schedules (`/api/schedules`):** `GET /` public; `GET /resources`, `POST /`, `PUT /:id` yêu cầu JWT và vai trò `Nhân viên`, `Admin` hoặc `Chủ phòng khám`.
+  - `GET /resources` trả `{ doctors, clinics }`: bác sĩ đang `Hoạt động` và danh sách phòng khám, với alias PascalCase.
+  - Tạo/sửa ca lấy `NguoiCapNhat` từ JWT, kiểm tra bác sĩ đúng vai trò, phòng khám tồn tại, ngày hợp lệ và `GioBatDau < GioKetThuc`. `TrangThai` chỉ là `Hoạt động`/`Tạm ngưng`. Ca hoạt động trùng khung giờ với ca hoạt động khác của cùng bác sĩ trong ngày trả `409`; hai ca tiếp giáp được phép. Khóa transaction để chống tạo ca trùng đồng thời.
+  - Ca có lịch đặt chưa hủy chỉ được sửa `TrangThai`/`GhiChu`; đổi bác sĩ, phòng khám, ngày hoặc giờ trả `409`. Các bản ghi tạo mới dùng `generateId('LLV')`; ca không tồn tại khi sửa trả `404`.
   - `NgayLamViec` trong kết quả `GET /api/schedules` và `GET /api/appointments` là chuỗi ngày `YYYY-MM-DD`, không kèm múi giờ. Frontend giữ nguyên ngày lịch khi chọn/lọc/hiển thị, không chuyển ngày này qua UTC/Local.
-- **Appointments (`/api/appointments`):** `GET /`, `GET /all`, `POST /`, `PUT /:id`, `PUT /:id/cancel`
-  - Tất cả endpoint yêu cầu JWT. Danh sách/thao tác lịch chỉ thuộc tài khoản trong token; không nhận tài khoản khác từ request. `GET /all` chỉ trả các `IdLichLamViec` đã kín chỗ, không trả ID lịch đặt, tài khoản hoặc hồ sơ của người khác.
+- **Appointments (`/api/appointments`):** `GET /`, `GET /all`, `POST /`, `PUT /:id`, `PUT /:id/cancel`, `GET /manage`, `PUT /:id/status`
+  - Tất cả endpoint yêu cầu JWT. Các endpoint Bệnh nhân giới hạn quyền sở hữu theo tài khoản trong token; không nhận tài khoản khác từ request. `GET /all` chỉ trả các `IdLichLamViec` đã kín chỗ, không trả ID lịch đặt, tài khoản hoặc hồ sơ của người khác.
+  - `GET /manage` và `PUT /:id/status` yêu cầu vai trò `Nhân viên`, `Admin`, `Chủ phòng khám`, đặt trước Middleware `scopeAccount` để được quản lý lịch toàn phòng khám. `GET /manage` nhận tùy chọn `date=YYYY-MM-DD`, `status`, trả đủ thông tin lượt khám, bệnh nhân/người thân, người đặt, lịch/giờ/bác sĩ/phòng khám, lý do/ghi chú/trạng thái theo PascalCase.
+  - `PUT /:id/status` dùng `IdChiTietLD`, body `{ TrangThai }`. Chỉ cho `Đã đặt -> Đã xác nhận/Đã hủy` và `Đã xác nhận -> Đã hủy`. Trạng thái đã xử lý, đang khám, hoàn thành hoặc đã hủy trả `409`; mã không tồn tại trả `404`. Khóa lượt khám/lịch đặt trong transaction để tránh chuyển trạng thái đồng thời.
   - `POST /`: hồ sơ phải thuộc người đăng nhập; ca khám phải tồn tại, `Hoạt động`, chưa bắt đầu và chưa kín chỗ. Khóa dòng ca khám trong transaction trước khi kiểm tra chỗ trống để ngăn đặt trùng đồng thời. Ca quá hạn/tạm ngưng trả `400`; ca kín chỗ trả `409`.
   - `PUT /:id`: `id` là `IdChiTietLD`; cho phép cập nhật `IdLichLamViec`, `LiDoKham`, `GhiChu` khi trạng thái `Đã đặt` hoặc `Chờ duyệt` và lịch cũ còn ít nhất 6 tiếng. Ca mới cũng phải còn ít nhất 6 tiếng, đang hoạt động và trống (bỏ qua chính lịch đang sửa). Cập nhật trong transaction; không thay hồ sơ hoặc ghi đè dữ liệu lâm sàng. Trả `400` khi sai trạng thái/quá hạn, `409` khi ca kín chỗ.
   - `PUT /:id/cancel`: `id` là `IdChiTietLD`; chỉ hủy trạng thái `Đã đặt` hoặc `Chờ duyệt`, trước giờ khám ít nhất 6 tiếng (giờ Việt Nam). Trả `400` khi sai trạng thái/quá hạn, `404` khi không tìm thấy.
 - **Quy tắc xóa hồ sơ:** `DELETE /api/patients/profiles/:idHoSo` xóa hồ sơ chưa gắn lịch khám và chưa có chẩn đoán/kết luận, cùng dữ liệu `THONGTINNGUOITHAN`, `TIENSUBENH` trong một transaction. Trả `404` nếu không tồn tại; `409` nếu đã gắn lịch khám, có chẩn đoán/kết luận hoặc còn ràng buộc dữ liệu, nhằm bảo toàn lịch sử khám và kết quả AI.
 - **Examinations (`/api/examinations`) — đã triển khai:** `GET /queue`, `GET /patient/:idHoSoBenhNhan`, `PUT /vitals`, `PUT /diagnosis`
   - Toàn bộ router yêu cầu Bearer JWT qua `verifyToken`. `requireRoles(...roles)` trả `403` với thông báo `Bạn không có quyền thực hiện chức năng này.` khi sai vai trò; thiếu/sai token trả `401`.
-  - `GET /queue`: dành cho `Y tá`, `Bác sĩ`, `Admin`, `Chủ phòng khám`. Query `date=YYYY-MM-DD` mặc định là ngày hiện tại theo `Asia/Ho_Chi_Minh`; `all=true` lấy mọi ngày chưa hủy. Trả các mã lượt khám/lịch/hồ sơ, ngày lịch dạng `YYYY-MM-DD`, giờ khám, bác sĩ/phòng khám, lý do, trạng thái, nhân thân và cờ `DaDoSinhHieu`, `DaChanDoan`. Với Bác sĩ, ca thuộc người đăng nhập được ưu tiên và đánh dấu `LaCaCuaToi`; giao diện mặc định lọc ca của tôi và cho phép bỏ lọc để xem toàn phòng khám.
+  - `GET /queue`: dành cho `Y tá`, `Bác sĩ`, `Admin`, `Chủ phòng khám`. Chỉ lấy lịch `Đã xác nhận`, `Đang khám`, `Hoàn thành`; không đưa lịch chờ nhân viên duyệt vào lâm sàng. Query `date=YYYY-MM-DD` mặc định là ngày hiện tại theo `Asia/Ho_Chi_Minh`; `all=true` lấy mọi ngày trong các trạng thái trên. Trả các mã lượt khám/lịch/hồ sơ, ngày lịch dạng `YYYY-MM-DD`, giờ khám, bác sĩ/phòng khám, lý do, trạng thái, nhân thân và cờ `DaDoSinhHieu`, `DaChanDoan`. Với Bác sĩ, ca thuộc người đăng nhập được ưu tiên và đánh dấu `LaCaCuaToi`; giao diện mặc định lọc ca của tôi và cho phép bỏ lọc để xem toàn phòng khám.
   - `GET /patient/:idHoSoBenhNhan`: cùng quyền đọc như queue. Trả tất cả trường lâm sàng theo PascalCase, thông tin hành chính đúng `LoaiThongTin`, thông tin lượt khám, `tienSuBenh` và `lichSuKhamTruoc`. Gom cùng cá nhân theo `IdTaiKhoan` + `LoaiThongTin`, thêm `HoTen`/`MoiQuanHe` khi là người thân; lịch sử không chứa lượt hiện tại, lượt đã hủy hoặc lượt chưa có chẩn đoán/kết luận.
-  - `PUT /vitals`: dành cho `Y tá`, `Admin`, `Chủ phòng khám`. Body dùng `idHoSoBenhNhan` và các trường sinh hiệu/triệu chứng; số phải hữu hạn, không âm và phù hợp kiểu cột, giữ nguyên giá trị `0`. Trường không gửi giữ nguyên; trường gửi `null`/chuỗi rỗng được xóa, nhưng phải có ít nhất một giá trị sinh hiệu/triệu chứng. Trong cùng transaction, khóa lượt khám/hồ sơ, cập nhật `HOSOBENHNHAN` và chuyển `LICHDAT` từ `Đã đặt`/`Đã xác nhận` sang `Đang khám`. Chặn ghi sinh hiệu cho lượt đã hủy/hoàn thành (`409`).
+  - `PUT /vitals`: dành cho `Y tá`, `Admin`, `Chủ phòng khám`; chỉ ghi khi lịch `Đã xác nhận`/`Đang khám`. Nếu còn `Đã đặt`, trả `409` với `Lịch hẹn chưa được nhân viên xác nhận.` Body dùng `idHoSoBenhNhan` và các trường sinh hiệu/triệu chứng; số phải hữu hạn, không âm và phù hợp kiểu cột, giữ nguyên giá trị `0`. Trường không gửi giữ nguyên; trường gửi `null`/chuỗi rỗng được xóa, nhưng phải có ít nhất một giá trị sinh hiệu/triệu chứng. Trong cùng transaction, khóa lượt khám/hồ sơ, cập nhật `HOSOBENHNHAN` và chuyển `LICHDAT` từ `Đã xác nhận` sang `Đang khám`. Các trạng thái khác trả `409`.
   - `PUT /diagnosis`: dành cho `Bác sĩ`, `Admin`, `Chủ phòng khám`. Body gồm `idHoSoBenhNhan`, `ChuanDoan`, `KetLuan` (bắt buộc, tối đa 255 ký tự mỗi trường). Trong transaction, khóa lượt khám/hồ sơ, cập nhật chẩn đoán/kết luận và `ThoiDiemCapNhat = NOW()`, chuyển lịch liên kết chưa hủy sang `Hoàn thành`. Cho phép bác sĩ tải lại và hiệu chỉnh kết luận sẵn có; không tác động hồ sơ của các lượt khác. Lượt đã hủy trả `409`; hồ sơ chưa gắn lịch/không tồn tại trả `404` khi lưu.
   - Dữ liệu đọc và `RETURNING` đều có alias PascalCase. Frontend tách API trong `examinationService.ts`, logic trong `useNurseExam.ts`/`useDoctorExam.ts` và các Hook dùng chung. Giao diện có bộ lọc ngày/trạng thái, tìm tên/mã hồ sơ, tự nạp form, cảnh báo bệnh nền tông `amber`; khung Phân Tích AI chỉ là placeholder, chưa gọi AI Service.
 - **Clinic (`/api/clinic`):** `GET /info`, `POST /info`, `GET /services`, `POST /services`, `PUT /services/:id`, `GET /events`, `POST /events`, `PUT /events/:id`
+  - `GET /info`, `GET /services`, `GET /events` public. Các API ghi yêu cầu JWT và vai trò `Chủ phòng khám`/`Admin`. Danh sách public chỉ có dịch vụ `Hiển thị`/`Hoạt động`, sự kiện `Hiển thị`; `?manage=true` yêu cầu cùng quyền quản lý và trả cả nội dung đã ngừng/ẩn để chỉnh sửa.
+  - `POST /info` lấy `ChuPhongKham` từ JWT, cập nhật phòng khám hiện tại (bản ghi đầu theo `IdPhongKham`) hoặc tạo `generateId('PK')` nếu chưa có. `GET /info` trả bản ghi đó hoặc `null` khi chưa cấu hình. Việc tạo ban đầu được khóa để tránh hai bản ghi đồng thời.
+  - Dịch vụ/sự kiện mặc định lấy phòng khám hiện tại nếu không gửi `IdPhongKham`; mã mới qua `generateId('DV')`/`generateId('SK')`. Sửa bản ghi không tồn tại trả `404`; giá dịch vụ không âm, tối đa 2 chữ số thập phân. Ngừng cung cấp dịch vụ/ẩn sự kiện thay cho xóa cứng để giữ dữ liệu.
+  - Hai trường thời gian sự kiện dùng `TIMESTAMP` theo PostgreSQL hiện có (đã sửa mô tả `TIME` cũ ở schema trên, không chạy migration thay đổi DB). API nhận/trả chuỗi ngày giờ `YYYY-MM-DDTHH:mm[:ss]` theo giờ phòng khám, form dùng `datetime-local`; nếu có thời gian, cần đủ bắt đầu/kết thúc và bắt đầu trước kết thúc. Toàn bộ dữ liệu đọc/ghi trả alias PascalCase.
+- **Users (`/api/users`):** `GET /`, `POST /`, `PUT /:id`, chỉ dành cho `Admin` qua JWT và `requireRoles('Admin')`.
+  - Danh sách/kết quả ghi trả PascalCase, `NgaySinh` dạng `YYYY-MM-DD`, tuyệt đối không trả `MatKhau`/hash. Tạo tài khoản bằng `generateId('TK')`, hash bcrypt; kiểm tra 6 vai trò chuẩn và trùng tên đăng nhập/CCCD/SĐT/email (`409`). Tài khoản Bệnh nhân có hồ sơ bản thân được tạo trong cùng transaction qua `ensureSelfProfile`.
+  - Cập nhật họ tên, vai trò, `Hoạt động`/`Khóa`, SĐT, email, địa chỉ; chỉ đổi hash mật khẩu khi gửi mật khẩu mới không rỗng. Không cho Admin tự khóa hoặc tự đổi khỏi vai trò `Admin` (`400`). Chuyển một tài khoản sang Bệnh nhân cũng bảo đảm hồ sơ bản thân có sẵn.
+  - Frontend triển khai `/staff` (duyệt lịch/ca làm việc), `/admin/users` (tài khoản), `/owner/clinic` (thông tin/dịch vụ/sự kiện); bảo vệ bằng `ClinicalAccess`, menu hiển thị theo vai trò. API ở Services, state/nghiệp vụ ở Hooks; giao diện JSX dùng Tailwind CSS v4.
 - **AI (`/api/ai`):** `GET /results?idChiTietLD=...`, `POST /results`, `POST /analyze` (gọi sang FastAPI AI Service)
 
 ---

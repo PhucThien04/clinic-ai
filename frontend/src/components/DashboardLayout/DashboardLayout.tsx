@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../../services/authService";
+import {getManagementNavigation} from '../../utils/managementConfig';
 import {
   Activity,
   LogOut,
@@ -56,6 +57,10 @@ export default function DashboardLayout({
         </div>
 
         <nav className="p-5 flex flex-col gap-2 min-h-0 flex-1 overflow-y-auto">
+          {getManagementNavigation(currentUser.VaiTro).map(item=><Link key={item.path} to={item.path}
+            className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold no-underline ${isActive(item.path)?'bg-sky-100 text-sky-600':'text-slate-500 hover:bg-slate-50'}`}>
+            <Users size={18}/>{item.label}
+          </Link>)}
           <Link to="/" className="flex items-center gap-3 [padding:10px_14px] rounded-[8px] no-underline font-semibold text-slate-500 [background:transparent]">
             <Home size={18} /> Về trang chủ
           </Link>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../../services/authService";
+import {getManagementNavigation} from '../../utils/managementConfig';
 import {
   Activity,
   LogOut,
@@ -51,7 +52,7 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
       </div>
 
       <header className="bg-white [border-bottom:1px_solid_#e2e8f0] sticky top-0 [z-index:50] [box-shadow:0_1px_3px_0_rgb(0_0_0_/_0.05)]">
-        <div className="max-w-300 mx-auto my-0 [padding:12px_24px] flex justify-between items-center">
+        <div className="max-w-300 mx-auto my-0 [padding:12px_24px] flex flex-wrap justify-between items-center gap-4">
           <Link to="/" className="no-underline flex items-center gap-[10px]">
             <div className="[background:linear-gradient(135deg,_#0284c7,_#0d9488)] p-2 rounded-[10px] flex">
               <Activity color="white" size={24} />
@@ -62,7 +63,7 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
             </div>
           </Link>
 
-          <nav className="flex gap-[6px] items-center">
+          <nav className="flex flex-wrap gap-[6px] items-center">
             <Link
               to="/"
               className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[14px] font-semibold no-underline cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 [border:none] ${isActive("/") ? "[padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700" : "border border-slate-300 bg-white text-slate-700 hover:border-sky-600 hover:bg-sky-50 hover:text-sky-600"}`}
@@ -100,6 +101,8 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
               </Link>
             )}
 
+            {getManagementNavigation(currentUser?.VaiTro).map(item=><Link key={item.path} to={item.path}
+              className={`rounded-lg border px-3 py-2 text-sm font-semibold no-underline ${isActive(item.path)?'border-sky-600 bg-sky-600 text-white':'border-slate-200 text-sky-600 hover:bg-sky-50'}`}>{item.label}</Link>)}
             {currentUser ? (
               <div className="flex items-center gap-3 ml-3 pl-3 [border-left:1px_solid_#e2e8f0]">
                 <Link

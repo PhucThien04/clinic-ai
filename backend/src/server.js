@@ -10,6 +10,7 @@ const examinationRoutes = require('./routes/examinationRoutes');
 const clinicRoutes = require('./routes/clinicRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,6 +28,7 @@ app.use('/api/examinations', examinationRoutes);
 app.use('/api/clinic', clinicRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/users', userRoutes);
 
 // Route kiểm tra server hoạt động
 app.get('/', (req, res) => {

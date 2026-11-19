@@ -11,6 +11,9 @@ import EventsPage from "./pages/home/EventsPage/EventsPage";
 import Profile from "./pages/auth/Profile";
 import PatientAppointments from "./pages/patient/PatientAppointments";
 import PatientMedicalHistory from "./pages/patient/PatientMedicalHistory";
+import StaffWorkspace from './pages/staff/StaffWorkspace';
+import AdminUsers from './pages/admin/AdminUsers';
+import ClinicManagement from './pages/owner/ClinicManagement';
 
 export default function App(): React.JSX.Element {
   return (
@@ -66,6 +69,9 @@ export default function App(): React.JSX.Element {
         {/* Các trang Nghiệp vụ Nội bộ (Sử dụng DashboardLayout bên trong component của chúng) */}
         <Route path="/nurse" element={<NurseExam />} />
         <Route path="/doctor" element={<DoctorExam />} />
+        <Route path="/staff" element={<StaffWorkspace />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/owner/clinic" element={<ClinicManagement />} />
       </Routes>
     </Router>
   );
