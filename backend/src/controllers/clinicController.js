@@ -59,8 +59,8 @@ async function saveService(req,update){
     const values=[clinic.IdPhongKham,text(b.TenDichVu,'tên dịch vụ'),text(b.MoTa,'mô tả',255,false),price,
       choice(b.TrangThai||'Hiển thị',['Hiển thị','Hoạt động','Ngừng cung cấp'],'Trạng thái'),id,mediaUrl(b.HinhAnh)];
     const result=await client.query(update
-      ?`UPDATE DICHVU SET IdPhongKham=$1,TenDichVu=$2,MoTa=$3,Gia=$4,TrangThai=$5,HinhAnh=$7 WHERE IdDichVu=$6 RETURNING ${serviceColumns}`
-      :`INSERT INTO DICHVU (IdPhongKham,TenDichVu,MoTa,Gia,TrangThai,IdDichVu,HinhAnh) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING ${serviceColumns}`,values);
+      ?`UPDATE DICHVU SET IdPhongKham=$1,TenDichVu=$2,MoTa=$3,Gia=$4,TrangThai=$5,HinhAnh=$7,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdDichVu=$6 RETURNING ${serviceColumns}`
+      :`INSERT INTO DICHVU (IdPhongKham,TenDichVu,MoTa,Gia,TrangThai,IdDichVu,HinhAnh,ThoiDiemCapNhat) VALUES ($1,$2,$3,$4,$5,$6,$7,NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh') RETURNING ${serviceColumns}`,values);
     if(update&&old.HinhAnh!==result.rows[0].HinhAnh)await removeStoredImage(old.HinhAnh,req.user,'services');
     return result.rows[0];
   });
@@ -76,8 +76,8 @@ async function saveEvent(req,update){
     const values=[clinic.IdPhongKham,text(b.TieuDe,'tiêu đề'),text(b.NoiDung,'nội dung',20000),
       choice(b.TrangThai||'Hiển thị',['Hiển thị','Ẩn'],'Trạng thái'),start,end,id,mediaUrl(b.HinhAnh)];
     const result=await client.query(update
-      ?`UPDATE SUKIEN SET IdPhongKham=$1,TieuDe=$2,NoiDung=$3,TrangThai=$4,ThoiGianBatDau=$5,ThoiGianKetThuc=$6,HinhAnh=$8 WHERE IdSuKien=$7 RETURNING ${eventColumns}`
-      :`INSERT INTO SUKIEN (IdPhongKham,TieuDe,NoiDung,TrangThai,ThoiGianBatDau,ThoiGianKetThuc,IdSuKien,HinhAnh) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING ${eventColumns}`,values);
+      ?`UPDATE SUKIEN SET IdPhongKham=$1,TieuDe=$2,NoiDung=$3,TrangThai=$4,ThoiGianBatDau=$5,ThoiGianKetThuc=$6,HinhAnh=$8,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdSuKien=$7 RETURNING ${eventColumns}`
+      :`INSERT INTO SUKIEN (IdPhongKham,TieuDe,NoiDung,TrangThai,ThoiGianBatDau,ThoiGianKetThuc,IdSuKien,HinhAnh,ThoiDiemCapNhat) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh') RETURNING ${eventColumns}`,values);
     if(update&&old.HinhAnh!==result.rows[0].HinhAnh)await removeStoredImage(old.HinhAnh,req.user,'events');
     return result.rows[0];
   });

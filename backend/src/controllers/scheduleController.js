@@ -54,8 +54,8 @@ async function save(req, update) {
     const id = update ? req.params.id : generateId('LLV');
     const params = [...Object.values(values),req.user.IdTaiKhoan,id];
     const result = await client.query(update
-      ? `UPDATE LICHLAMVIEC SET IdBacSi=$1,IdPhongKham=$2,NgayLamViec=$3,GioBatDau=$4,GioKetThuc=$5,TrangThai=$6,GhiChu=$7,NguoiCapNhat=$8 WHERE IdLichLamViec=$9 RETURNING ${scheduleColumns}`
-      : `INSERT INTO LICHLAMVIEC (IdBacSi,IdPhongKham,NgayLamViec,GioBatDau,GioKetThuc,TrangThai,GhiChu,NguoiCapNhat,IdLichLamViec) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING ${scheduleColumns}`, params);
+      ? `UPDATE LICHLAMVIEC SET IdBacSi=$1,IdPhongKham=$2,NgayLamViec=$3,GioBatDau=$4,GioKetThuc=$5,TrangThai=$6,GhiChu=$7,NguoiCapNhat=$8,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichLamViec=$9 RETURNING ${scheduleColumns}`
+      : `INSERT INTO LICHLAMVIEC (IdBacSi,IdPhongKham,NgayLamViec,GioBatDau,GioKetThuc,TrangThai,GhiChu,NguoiCapNhat,IdLichLamViec,ThoiDiemCapNhat) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh') RETURNING ${scheduleColumns}`, params);
     return result.rows[0];
   });
 }

@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {useLocation,useNavigate} from 'react-router-dom';
 import {authService} from '../services/authService';
 import {notificationService} from '../services/notificationService';
@@ -15,7 +15,10 @@ export function useNotifications(){
   const location=useLocation();const navigate=useNavigate();
   const [data,setData]=useState<{accountId:string;role:string;items:Notification[]}>({accountId:'',role:'',items:[]});
   const [read,setRead]=useState<{key:string;ids:string[]}>(()=>({key,ids:readIds(key)}));
-  const [open,setOpen]=useState(false);const [loading,setLoading]=useState(false);const [error,setError]=useState('');
+  const [openKey,setOpenKey]=useState<string|null>(null);
+  const panelKey=JSON.stringify([accountId,role,location.pathname,location.search]);const open=openKey===panelKey;
+  const setOpen=useCallback((value:boolean)=>setOpenKey(value?panelKey:null),[panelKey,setOpenKey]);const [loading,setLoading]=useState(false);const [error,setError]=useState('');
+  useEffect(()=>{let active=true;queueMicrotask(()=>{if(active)setOpenKey(null);});return()=>{active=false;};},[panelKey]);
   const [now,setNow]=useState(Date.now);const refreshRef=useRef<()=>void>(()=>{});
   const containerRef=useRef<HTMLDivElement>(null);const buttonRef=useRef<HTMLButtonElement>(null);
   const notifications=data.accountId===accountId&&data.role===role?data.items:[];
@@ -36,7 +39,6 @@ export function useNotifications(){
     void load();const timer=window.setInterval(()=>void load(),45000);
     return()=>{controller.abort();window.clearInterval(timer);window.clearTimeout(debounce);window.removeEventListener('notifications-changed',changed);refreshRef.current=()=>{};};
   },[accountId,role,location.pathname,location.search]);
-  useEffect(()=>{setOpen(false);},[accountId,role,location.pathname,location.search]);
   useEffect(()=>{
     const sync=(event:StorageEvent)=>{if(event.key===key)setRead({key,ids:readIds(key)});};
     window.addEventListener('storage',sync);return()=>window.removeEventListener('storage',sync);
@@ -48,7 +50,7 @@ export function useNotifications(){
     const escape=(event:KeyboardEvent)=>{if(event.key==='Escape'){setOpen(false);buttonRef.current?.focus();}};
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape);
     return()=>{window.clearInterval(timer);document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape);};
-  },[open]);
+  },[open,setOpen]);
   const markRead=(ids:string[])=>{
     const merged=Array.from(new Set([...readIds(key),...readSet,...ids])).slice(-1000);
     setRead({key,ids:merged});try{localStorage.setItem(key,JSON.stringify(merged));}catch{/* Bộ nhớ không khả dụng: vẫn giữ trạng thái trong phiên hiện tại. */}
@@ -58,5 +60,5 @@ export function useNotifications(){
   const selectNotification=(item:Notification)=>{markAsRead(item.id);setOpen(false);navigate(item.link);};
   const toggleOpen=()=>{if(!open){setNow(Date.now());refreshRef.current();}setOpen(!open);};
   return {loggedIn:!!accountId,notifications,unreadCount:notifications.filter(item=>!readSet.has(item.id)).length,isRead:(id:string)=>readSet.has(id),
-    markAsRead,markAllAsRead,selectNotification,open,toggleOpen,now,loading,error,containerRef,buttonRef};
+    markAllAsRead,selectNotification,open,toggleOpen,now,loading,error,containerRef,buttonRef};
 }

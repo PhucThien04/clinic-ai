@@ -10,7 +10,7 @@ export const formatDate = (dateStr?: string) => {
 export const getClinicTimestamp = (date: string, time: string) =>
   Date.parse(`${date}T${time}+07:00`);
 
-export const formatNotificationDateTime = (timestamp: string) => {
+const formatNotificationDateTime = (timestamp: string) => {
   const date=new Date(timestamp);
   if(!Number.isFinite(date.getTime()))return '';
   const parts=new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);
@@ -27,7 +27,7 @@ export const formatRelativeTime=(isoString:string,now:number=Date.now())=>{
   return `${relative} · ${formatNotificationDateTime(isoString)}`;
 };
 
-export const formatDateTime = (dateStr?: string) => {
+export const formatDateTime = (dateStr?: string|null) => {
   if (!dateStr) return "";
   try {
     // Nếu db trả về format cũ (chỉ có giờ vd: 08:00:00)

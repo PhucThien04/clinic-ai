@@ -1,6 +1,6 @@
 # Clinic AI — Đặc tả Kỹ thuật & Nghiệp vụ Dự án (Single Source of Truth)
 
-**Phiên bản:** 2.7 (Điều hướng theo tab và timestamp thông báo thực tế)
+**Phiên bản:** 2.8 (Dọn code và bỏ DDL runtime)
 
 **Cập nhật:** 20/11/2026
 
@@ -95,7 +95,7 @@ Node.js / Express Backend trên host ── HTTP ── Python / FastAPI (dự k
 PostgreSQL 15 trong Docker                   External AI API (dự kiến)
 ```
 
-- **Frontend:** React 19, TypeScript, Vite 8, React Router, Axios, Lucide React và **Tailwind CSS v4**. `@tailwindcss/vite` được đăng ký trong `frontend/vite.config.ts`; entry CSS là `frontend/src/index.css` với `@import "tailwindcss";`.
+- **Frontend:** React 19, TypeScript 7 cho compiler (`@typescript/native` alias) và TypeScript 6 API cho ESLint (`typescript` alias sang `@typescript/typescript6`), Vite 8, React Router, Axios, Lucide React và **Tailwind CSS v4**. `@tailwindcss/vite` được đăng ký trong `frontend/vite.config.ts`; entry CSS là `frontend/src/index.css` với `@import "tailwindcss";`.
 - **Backend:** Node.js, Express 5, `pg`, JWT (`jsonwebtoken`), bcrypt, dotenv và nodemon. Backend xử lý nghiệp vụ, kiểm tra quyền và truy cập PostgreSQL qua `backend/src/config/db.js`.
 - **AI Service dự kiến:** Python/FastAPI, giao tiếp External AI Provider; **tuyệt đối không** truy cập trực tiếp PostgreSQL. `ai-service/` hiện rỗng, chưa có mã FastAPI, `requirements.txt` hoặc luồng gọi External AI API. Các chức năng AI trong đặc tả là yêu cầu đích, không đồng nghĩa đã triển khai xong.
 - **Database:** PostgreSQL 15 trong Docker, image `postgres:15`. Môi trường đã kiểm tra có container `datn`, publish cổng host `5432`, lưu dữ liệu ở Docker volume gắn tại `/var/lib/postgresql/data`. Backend chạy trên host dùng `DB_HOST=localhost`, `DB_PORT=5432`; chưa có Dockerfile hoặc Docker Compose trong repo.
@@ -137,7 +137,6 @@ clinic-ai/
 ├── frontend/
 │   ├── public/              # Tài nguyên tĩnh
 │   ├── src/
-│   │   ├── assets/
 │   │   ├── components/
 │   │   ├── hooks/
 │   │   ├── pages/           # admin, auth, doctor, home, nurse, owner, patient, staff
@@ -170,7 +169,7 @@ Không có `.ai-workflow/`, `database/` hoặc `docs/` trong workspace. `ai-serv
 
 1. Chuẩn bị Node.js **22.14+**, npm và Docker Desktop với Linux containers. Vite đang cài đặt chấp nhận Node.js `^20.19.0 || >=22.12.0`; mốc 22.14+ cũng đáp ứng utility test. Python chỉ cần khi bắt đầu triển khai FastAPI.
 2. Kiểm tra container PostgreSQL bằng `docker ps -a`; nếu container `datn` đã có nhưng dừng, dùng `docker start datn`. Kiểm tra sẵn sàng bằng `docker exec datn pg_isready -U postgres -d clinic_duc_tin`. Hướng dẫn tạo container PostgreSQL 15 mới và volume riêng nằm trong [README, mục 4.1](./README.md#41-postgresql-qua-docker).
-3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo chưa có SQL bootstrap/seed hoặc bộ migration tổng quát. Giữ schema đang có; với môi trường mới, nhập SQL schema/dump theo mục 5 bằng `psql` trong container, bao gồm ba cột ảnh nullable `VARCHAR(500)`; không còn helper tự thêm cột ảnh. `notificationSchemaService.js` bổ sung timestamp thông báo và trigger idempotent trong transaction trước khi Backend listen; integration test chạy trên schema riêng. Tài khoản DB cần quyền ALTER TABLE/tạo FUNCTION/TRIGGER. Không hướng dẫn chạy script từ thư mục `database/` không tồn tại.
+3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo chưa có SQL bootstrap/seed/migration. Với môi trường mới, nhập schema/dump theo mục 5; ba cột ảnh và `ThoiDiemCapNhat` của 5 bảng TAIKHOAN/SUKIEN/DICHVU/LICHLAMVIEC/LICHDAT phải có sẵn. Backend khởi động bằng app.listen trực tiếp, không chạy ALTER TABLE, CREATE FUNCTION/TRIGGER hoặc sửa schema trong request. TIENSUBENH.IdChiTietLD phải nullable theo đặc tả; đã bỏ fallback tự DROP NOT NULL. Integration test clone schema hiện có và không gọi DDL từ mã ứng dụng.
 4. Nếu chưa có `backend/.env`, sao chép `backend/.env.example` vào đó rồi điền `PORT`, `DB_USER`, `DB_HOST`, `DB_NAME`, `DB_PASSWORD`, `DB_PORT`, `JWT_SECRET`. Mặc định database `clinic_duc_tin`; mật khẩu phải khớp cấu hình PostgreSQL. Chạy Backend từ `backend/` để dotenv đọc đúng tệp. Nếu sau này Backend chạy trong Docker, dùng tên dịch vụ/container DB trên cùng network làm `DB_HOST`.
 5. Tại `backend/`, chạy `npm ci` rồi `npm run dev` (Express `http://localhost:5000`). Tại terminal khác trong `frontend/`, chạy `npm ci` rồi `npm run dev` (Vite thường `http://localhost:5173`). Axios hiện dùng `http://localhost:5000/api`.
 6. Chưa có lệnh khởi động AI Service có thể thực thi trong repo. Chỉ thêm hướng dẫn pip/uvicorn sau khi có dependency và entry point FastAPI thật. Trên PowerShell chặn `npm.ps1`, dùng `npm.cmd`.
@@ -218,7 +217,7 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 | | `TrangThai` | `VARCHAR(50)` | `NOT NULL` | Trạng thái (`Hoạt động`, `Khóa`) |
 | | `VaiTro` | `VARCHAR(100)` | `NOT NULL` | `Bệnh nhân`, `Nhân viên`, `Y tá`, `Bác sĩ`, `Admin`, `Chủ phòng khám` |
 | | `AnhDaiDien` | `VARCHAR(500)` | `NULL` | URL ảnh đại diện http/https; null khi chưa có/xóa ảnh |
-| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Trigger ghi khi tạo/cập nhật tài khoản để thông báo Admin có thời gian thực |
+| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | SQL INSERT/UPDATE ghi khi tạo/cập nhật tài khoản để thông báo Admin có thời gian thực |
 | **PHONGKHAM** | `IdPhongKham` | `CHAR(13)` | `PK, NOT NULL` | Mã phòng khám (`PK...`) |
 | | `ChuPhongKham` | `CHAR(13)` | `FK -> TAIKHOAN, NOT NULL` | Mã tài khoản chủ phòng khám |
 | | `TenPhongKham` | `VARCHAR(255)` | `NOT NULL` | Tên phòng khám |
@@ -236,7 +235,7 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 | | `ThoiGianBatDau` | `TIMESTAMP` | `NULL` | Ngày giờ bắt đầu áp dụng (khớp PostgreSQL hiện tại) |
 | | `ThoiGianKetThuc` | `TIMESTAMP` | `NULL` | Ngày giờ kết thúc áp dụng (khớp PostgreSQL hiện tại) |
 | | `HinhAnh` | `VARCHAR(500)` | `NULL` | URL ảnh sự kiện http/https |
-| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Trigger tự ghi mỗi INSERT/UPDATE sự kiện |
+| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Controller tự gán trong SQL INSERT/UPDATE sự kiện |
 | **DICHVU** | `IdDichVu` | `CHAR(13)` | `PK, NOT NULL` | Mã dịch vụ (`DV...`) |
 | | `IdPhongKham` | `CHAR(13)` | `FK -> PHONGKHAM, NOT NULL` | Mã phòng khám |
 | | `TenDichVu` | `VARCHAR(255)` | `NOT NULL` | Tên dịch vụ nha khoa |
@@ -244,7 +243,7 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 | | `Gia` | `DECIMAL(18,2)` | `NOT NULL` | Đơn giá dịch vụ (VNĐ) |
 | | `TrangThai` | `VARCHAR(50)` | `NOT NULL` | `Hiển thị`, `Hoạt động`, `Ngừng cung cấp` |
 | | `HinhAnh` | `VARCHAR(500)` | `NULL` | URL ảnh dịch vụ http/https |
-| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Trigger tự ghi mỗi INSERT/UPDATE dịch vụ |
+| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Controller tự gán trong SQL INSERT/UPDATE dịch vụ |
 | **LICHLAMVIEC** | `IdLichLamViec` | `CHAR(13)` | `PK, NOT NULL` | Mã ca làm việc (`LLV...`) |
 | | `IdBacSi` | `CHAR(13)` | `FK -> TAIKHOAN, NOT NULL` | Mã bác sĩ phụ trách |
 | | `IdPhongKham` | `CHAR(13)` | `FK -> PHONGKHAM, NOT NULL` | Mã phòng khám |
@@ -254,11 +253,11 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 | | `TrangThai` | `VARCHAR(30)` | `NOT NULL` | `Hoạt động`, `Tạm ngưng` |
 | | `GhiChu` | `VARCHAR(255)` | `NULL` | Ghi chú ca khám |
 | | `NguoiCapNhat` | `CHAR(13)` | `FK -> TAIKHOAN, NOT NULL` | Người tạo/cập nhật lịch |
-| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Trigger tự ghi mỗi INSERT/UPDATE ca làm việc |
+| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Controller tự gán trong SQL INSERT/UPDATE ca làm việc |
 | **LICHDAT** | `IdLichDat` | `CHAR(13)` | `PK, NOT NULL` | Mã lịch đặt (`LD...`) |
 | | `IdTaiKhoan` | `CHAR(13)` | `FK -> TAIKHOAN, NOT NULL` | Tài khoản đặt lịch |
 | | `TrangThai` | `VARCHAR(30)` | `NOT NULL` | `Đã đặt`, `Đã xác nhận`, `Đang khám`, `Hoàn thành`, `Đã hủy` |
-| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Trigger tự ghi mỗi INSERT/UPDATE lịch đặt; đổi chi tiết lịch cũng chạm cột này |
+| | `ThoiDiemCapNhat` | `TIMESTAMP` | `NULL`, default giờ Việt Nam hiện tại | Controller tự gán trong SQL INSERT/UPDATE lịch đặt; đổi chi tiết lịch cũng chạm cột này |
 | **HOSOBENHNHAN** | `IdHoSoBenhNhan` | `CHAR(13)` | `PK, NOT NULL` | Mã phiếu hồ sơ / lượt khám (`HS...`) |
 | | `IdTaiKhoan` | `CHAR(13)` | `FK -> TAIKHOAN, NOT NULL` | Chủ tài khoản quản lý |
 | | `LoaiThongTin` | `SMALLINT` | `CHECK (0 hoặc 1)` | `0`: Chủ tài khoản, `1`: Người thân |
@@ -383,7 +382,7 @@ Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng kh�
   - Admin: chỉ có 8 tài khoản cập nhật gần nhất và tổng số tài khoản khóa, link `/admin/users`; vẫn không truy vấn/trả thông báo sự kiện. Chủ phòng khám: tổng lượt hôm nay link `/owner/clinic`, dịch vụ link `/owner/clinic?tab=services`, sự kiện link `/owner/clinic?tab=events`; Bệnh nhân nhận sự kiện link `/su-kien`. Các link lịch cá nhân/lâm sàng/Nhân viên giữ đúng workspace tương ứng.
   - Ưu tiên cảnh báo và tổng hợp trước, sau đó timestamp cập nhật giảm dần. Bệnh nhân/Nhân viên lấy tối đa 15 lịch để dành chỗ cho sự kiện/ca làm việc. ID thông báo gắn timestamp phiên bản để nội dung được chỉnh sửa có thể trở thành chưa đọc dù trạng thái không đổi.
   - Mọi `timestamp` là ISO 8601 chuẩn UTC (`Z`) từ thời điểm cập nhật thực; không suy ra từ mã ID, không dùng giờ bắt đầu khám/sự kiện hay mốc cứng 00:00/08:00. Lượt khám lấy GREATEST của lịch đặt, ca làm việc và hồ sơ; danh mục/ca/tài khoản lấy cột cập nhật; tổng số tài khoản khóa lấy MAX timestamp; tổng hợp hoạt động lấy lần cập nhật lịch/ca gần nhất hoặc thời điểm quan sát khi chưa có lượt.
-  - `notificationSchemaService` tạo cột nullable với default `NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh'` và trigger BEFORE INSERT OR UPDATE cho DICHVU/SUKIEN/LICHDAT/LICHLAMVIEC/TAIKHOAN. Khóa advisory theo schema và transaction bảo đảm chạy lại an toàn. HOSOBENHNHAN giữ cột hiện có, chỉ ghi khi lưu sinh hiệu/chẩn đoán; không tự điền vào hồ sơ trống. API đổi chi tiết lịch chạm timestamp lịch đặt trong cùng transaction.
+  - Cột ThoiDiemCapNhat nullable TIMESTAMP đã có sẵn trên 5 bảng DICHVU/SUKIEN/LICHDAT/LICHLAMVIEC/TAIKHOAN. Các SQL INSERT/UPDATE gán trực tiếp `NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh'`, kể cả xóa tham chiếu ảnh và chuyển trạng thái lâm sàng. Không còn service sửa schema runtime; không phụ thuộc trigger để ghi timestamp. Trigger cũ nếu có trong DB chính không bị ứng dụng tạo/xóa. HOSOBENHNHAN chỉ cập nhật cột sẵn có khi lưu sinh hiệu/chẩn đoán; đổi chi tiết lịch chạm timestamp LICHDAT trong cùng transaction.
   - Dữ liệu cũ thiếu timestamp được ghi nhận mốc chuyển đổi một lần; đây không phải thời điểm tạo/cập nhật lịch sử được khôi phục. DB vẫn chỉ lưu trạng thái mới nhất, không phải audit log toàn bộ thông báo. Thông báo hủy gần đây được lọc theo thời điểm hủy/cập nhật thực, không phải ngày khám.
   - Frontend tách Services/Hooks/Utils/Components. Chuông giữ vị trí Header/Sidebar, badge chưa đọc, đóng khi click ngoài/Escape. `formatRelativeTime` hiển thị `Vừa xong`, số phút/giờ, `Hôm qua`, số ngày trước và `HH:mm · DD/MM/YYYY` theo giờ Việt Nam; nhãn tự cập nhật mỗi 30 giây khi mở. Click item đánh dấu đọc, đóng popover, navigate đầy đủ pathname + query; có nút đánh dấu tất cả.
   - Header phân cách ba tab công khai với workspace bằng vạch dọc; nút workspace có icon vai trò, viền/nền teal riêng và trạng thái active teal đậm. Bệnh nhân dùng nhãn `Đặt lịch khám`; mỗi actor vẫn chỉ thấy workspace của mình.

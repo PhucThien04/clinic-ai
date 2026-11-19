@@ -1,5 +1,5 @@
 import type {FormEvent,ReactNode} from 'react';
-export interface FormField {name:string;label:string;type?:string;required?:boolean;maxLength?:number;readOnly?:boolean;
+interface FormField {name:string;label:string;type?:string;required?:boolean;maxLength?:number;readOnly?:boolean;
   min?:string;step?:string;pattern?:string;fullWidth?:boolean;options?:{value:string;label:string}[]}
 export function ManagementForm({title,fields,values,onChange,onSubmit,saving,onCancel,children,hideTitle=false,columns=1,submitLabel='Lưu thông tin'}:{title:string;fields:FormField[];values:object;
   onChange:(name:string,value:string)=>void;onSubmit:(event:FormEvent)=>void;saving:boolean;onCancel?:()=>void;children?:ReactNode;hideTitle?:boolean;columns?:1|2;submitLabel?:string}){

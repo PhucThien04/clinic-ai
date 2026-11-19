@@ -32,7 +32,7 @@ exports.deleteImage=handle(async(req,res)=>{
       ${scope==='avatars'?'WHERE IdTaiKhoan=$1':''} FOR UPDATE`,scope==='avatars'?[req.user.IdTaiKhoan]:[]);
     await cloudinaryService.destroyImage(publicId);
     for(const row of rows.rows)if(extractPublicId(row.Image,process.env.CLOUDINARY_CLOUD_NAME)===publicId)
-      await client.query(`UPDATE ${table} SET ${imageColumn}=NULL WHERE ${idColumn}=$1`,[row.Id]);
+      await client.query(`UPDATE ${table} SET ${imageColumn}=NULL,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE ${idColumn}=$1`,[row.Id]);
   });
   res.json({message:'Đã xóa ảnh trên Cloudinary.'});
 });

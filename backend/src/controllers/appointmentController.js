@@ -30,7 +30,7 @@ exports.updateAppointmentStatus = management.handle(async (req,res) => {
     if(!result.rows.length) fail(404,'Không tìm thấy lịch đặt.');
     const row=result.rows[0];
     if(!((row.TrangThai==='Đã đặt' && ['Đã xác nhận','Đã hủy'].includes(target)) || (row.TrangThai==='Đã xác nhận' && target==='Đã hủy'))) fail(409,'Không thể chuyển trạng thái lịch hiện tại. Lịch đã xử lý hoặc đang khám.');
-    await client.query('UPDATE LICHDAT SET TrangThai=$1 WHERE IdLichDat=$2',[target,row.IdLichDat]);
+    await client.query(`UPDATE LICHDAT SET TrangThai=$1,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat=$2`,[target,row.IdLichDat]);
   });
   res.json({message:'Đã cập nhật trạng thái lịch đặt.'});
 });
@@ -112,7 +112,7 @@ exports.createAppointment = (req, res) => transaction(res, async client => {
   }
   const idLichDat = generateId('LD');
   const idChiTietLD = generateId('CT');
-  await client.query('INSERT INTO LICHDAT (IdLichDat, IdTaiKhoan, TrangThai) VALUES ($1, $2, $3)', [idLichDat, idTaiKhoan, 'Đã đặt']);
+  await client.query(`INSERT INTO LICHDAT (IdLichDat, IdTaiKhoan, TrangThai, ThoiDiemCapNhat) VALUES ($1, $2, $3, NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')`, [idLichDat, idTaiKhoan, 'Đã đặt']);
   await client.query(`INSERT INTO CHITIETLICHDAT (IdChiTietLD, IdHoSoBenhNhan, IdLichLamViec, IdLichDat, LiDoKham, GhiChu)
     VALUES ($1, $2, $3, $4, $5, $6)`, [idChiTietLD, targetId, IdLichLamViec, idLichDat, LiDoKham || null, GhiChu || null]);
   return { status: 201, body: { message: 'Đặt lịch khám thành công!', appointment: {
@@ -133,7 +133,7 @@ exports.updateAppointment = (req, res) => transaction(res, async client => {
 
 exports.cancelAppointment = (req, res) => transaction(res, async client => {
   const appointment = await getEditableAppointment(client, req.params.id, req.user.IdTaiKhoan);
-  await client.query('UPDATE LICHDAT SET TrangThai = $1 WHERE IdLichDat = $2 AND IdTaiKhoan = $3',
+  await client.query(`UPDATE LICHDAT SET TrangThai = $1, ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat = $2 AND IdTaiKhoan = $3`,
     ['Đã hủy', appointment.IdLichDat, req.user.IdTaiKhoan]);
   return { body: { message: 'Hủy lịch khám thành công!' } };
 });

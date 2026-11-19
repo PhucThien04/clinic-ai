@@ -4,10 +4,10 @@ import {useNotifications} from '../../hooks/useNotifications';
 import {formatRelativeTime} from '../../utils/dateUtils';
 
 export function NotificationBell({placement='header'}:{placement?:'header'|'sidebar'}){
-  const state=useNotifications();const panelId=useId();
+  const {containerRef,buttonRef,...state}=useNotifications();const panelId=useId();
   if(!state.loggedIn)return null;
-  return <div ref={state.containerRef} className={`${placement==='header'?'relative':'static'} shrink-0`}>
-    <button ref={state.buttonRef} type="button" aria-label={`Thông báo, ${state.unreadCount} chưa đọc`} title="Thông báo" aria-expanded={state.open} aria-controls={panelId}
+  return <div ref={containerRef} className={`${placement==='header'?'relative':'static'} shrink-0`}>
+    <button ref={buttonRef} type="button" aria-label={`Thông báo, ${state.unreadCount} chưa đọc`} title="Thông báo" aria-expanded={state.open} aria-controls={panelId}
       onClick={state.toggleOpen} className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-sky-600 hover:bg-sky-50">
       <Bell size={20}/>{state.unreadCount>0&&<span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-4 text-white">{state.unreadCount}</span>}
     </button>

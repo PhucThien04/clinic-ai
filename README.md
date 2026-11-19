@@ -46,7 +46,6 @@ clinic-ai/
 ├── frontend/
 │   ├── public/              # Tài nguyên tĩnh
 │   ├── src/
-│   │   ├── assets/
 │   │   ├── components/
 │   │   ├── hooks/
 │   │   ├── pages/           # admin, auth, doctor, home, nurse, owner, patient, staff

@@ -109,8 +109,8 @@ exports.saveExam = async (id, fields, diagnosis) => {
     const updated = await client.query(`UPDATE HOSOBENHNHAN SET ${setters.join(', ')}
       WHERE IdHoSoBenhNhan = $${values.length} RETURNING ${selectProfile('HOSOBENHNHAN')}`, values);
     await client.query(diagnosis
-      ? `UPDATE LICHDAT SET TrangThai = 'Hoàn thành' WHERE IdLichDat = $1 AND TrangThai <> 'Đã hủy'`
-      : `UPDATE LICHDAT SET TrangThai = 'Đang khám' WHERE IdLichDat = $1 AND TrangThai = 'Đã xác nhận'`,
+      ? `UPDATE LICHDAT SET TrangThai = 'Hoàn thành', ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat = $1 AND TrangThai <> 'Đã hủy'`
+      : `UPDATE LICHDAT SET TrangThai = 'Đang khám', ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat = $1 AND TrangThai = 'Đã xác nhận'`,
     [visit.rows[0].IdLichDat]);
     await client.query('COMMIT');
     return updated.rows[0];

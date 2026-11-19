@@ -19,11 +19,11 @@ exports.updateProfile=handle(async(req,res)=>{
     if(!old.rows.length)fail(404,'Không tìm thấy tài khoản.');
     const result=await client.query(`UPDATE TAIKHOAN SET HoTen=COALESCE($1,HoTen),NgaySinh=COALESCE($2,NgaySinh),
     GioiTinh=COALESCE($3,GioiTinh),Email=COALESCE($4,Email),SoDienThoai=COALESCE($5,SoDienThoai),DiaChi=COALESCE($6,DiaChi),
-    AnhDaiDien=CASE WHEN $8::boolean AND $9::text IS NOT NULL THEN $9 ELSE AnhDaiDien END WHERE IdTaiKhoan=$7 RETURNING ${profileColumns}`,
+    AnhDaiDien=CASE WHEN $8::boolean AND $9::text IS NOT NULL THEN $9 ELSE AnhDaiDien END,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdTaiKhoan=$7 RETURNING ${profileColumns}`,
     [b.HoTen,b.NgaySinh,b.GioiTinh,b.Email,b.SoDienThoai,b.DiaChi,req.user.IdTaiKhoan,hasImage,image]);
     if(hasImage&&!image){
       await removeStoredImage(old.rows[0].AnhDaiDien,req.user,'avatars');
-      return (await client.query(`UPDATE TAIKHOAN SET AnhDaiDien=NULL WHERE IdTaiKhoan=$1 RETURNING ${profileColumns}`,[req.user.IdTaiKhoan])).rows[0];
+      return (await client.query(`UPDATE TAIKHOAN SET AnhDaiDien=NULL,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdTaiKhoan=$1 RETURNING ${profileColumns}`,[req.user.IdTaiKhoan])).rows[0];
     }
     return result.rows[0];
   });

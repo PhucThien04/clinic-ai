@@ -182,24 +182,11 @@ exports.createMedicalHistory = async (req, res) => {
       TrangThai || 'Đang điều trị'
     ];
 
-    try {
-      const newHistory = await pool.query(insertQuery, values);
-      return res.status(201).json({
-        message: 'Thêm tiền sử bệnh thành công!',
-        history: newHistory.rows[0]
-      });
-    } catch (insertErr) {
-      // Nếu cột IdChiTietLD trong DB đang bị NOT NULL, tự động gỡ NOT NULL để cho phép khai báo trước khi khám
-      if (insertErr.code === '23502' && insertErr.column === 'idchitietld') {
-        await pool.query('ALTER TABLE TIENSUBENH ALTER COLUMN IdChiTietLD DROP NOT NULL');
-        const retryHistory = await pool.query(insertQuery, values);
-        return res.status(201).json({
-          message: 'Thêm tiền sử bệnh thành công!',
-          history: retryHistory.rows[0]
-        });
-      }
-      throw insertErr;
-    }
+    const newHistory = await pool.query(insertQuery, values);
+    return res.status(201).json({
+      message: 'Thêm tiền sử bệnh thành công!',
+      history: newHistory.rows[0]
+    });
   } catch (err) {
     console.error('Lỗi khi thêm tiền sử bệnh:', err);
     return res.status(500).json({ error: 'Lỗi server nội bộ.' });

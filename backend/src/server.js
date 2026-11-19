@@ -37,7 +37,4 @@ app.get('/', (req, res) => {
 });
 
 // Khởi động server
-const pool=require('./config/db');
-require('./services/notificationSchemaService').ensureNotificationTimestamps(pool).then(()=>{
-  app.listen(PORT, () => console.log(`Server đang chạy trên cổng ${PORT}`));
-}).catch(()=>{console.error('Không thể khởi tạo timestamp thông báo. Kiểm tra schema và quyền ALTER TABLE/TRIGGER.');process.exitCode=1;pool.end();});
+app.listen(PORT, () => console.log(`Server đang chạy trên cổng ${PORT}`));

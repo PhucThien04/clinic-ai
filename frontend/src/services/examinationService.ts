@@ -1,6 +1,6 @@
 import API from './api';
 
-export type ClinicalNumber = number | string | null;
+type ClinicalNumber = number | string | null;
 
 export interface ClinicalQueueItem {
   IdChiTietLD: string;
@@ -24,7 +24,7 @@ export interface ClinicalQueueItem {
   LaCaCuaToi: boolean;
 }
 
-export interface ChronicDiseaseItem {
+interface ChronicDiseaseItem {
   IdTienSuBenh: string;
   IdHoSoBenhNhan: string;
   TenBenh: string;
@@ -34,7 +34,7 @@ export interface ChronicDiseaseItem {
   TenNguoiGhiNhan: string | null;
 }
 
-export interface PastExamItem {
+interface PastExamItem {
   IdChiTietLD: string;
   IdHoSoBenhNhan: string;
   NgayLamViec: string;
@@ -94,7 +94,7 @@ export interface VitalsPayload {
   GhiChu?: string | null;
 }
 
-export interface DiagnosisPayload {
+interface DiagnosisPayload {
   idHoSoBenhNhan: string;
   ChuanDoan: string;
   KetLuan: string;

@@ -24,8 +24,8 @@ exports.createUser = handle(async (req,res) => {
   const user=await transaction(async client => {
     const duplicate=await client.query('SELECT 1 FROM TAIKHOAN WHERE TenTaiKhoan=$1 OR CCCD=$2 OR SoDienThoai=$3 OR (Email=$4 AND $4 IS NOT NULL)',[username,cccd,phone,email]);
     if(duplicate.rows.length)fail(409,'Tên đăng nhập, CCCD, số điện thoại hoặc email đã được sử dụng.');
-    const result=await client.query(`INSERT INTO TAIKHOAN (IdTaiKhoan,TenTaiKhoan,MatKhau,HoTen,CCCD,NgaySinh,GioiTinh,Email,SoDienThoai,DiaChi,TrangThai,VaiTro,AnhDaiDien)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING ${userColumns}`,
+    const result=await client.query(`INSERT INTO TAIKHOAN (IdTaiKhoan,TenTaiKhoan,MatKhau,HoTen,CCCD,NgaySinh,GioiTinh,Email,SoDienThoai,DiaChi,TrangThai,VaiTro,AnhDaiDien,ThoiDiemCapNhat)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh') RETURNING ${userColumns}`,
     [id,username,hash,name,cccd,b.NgaySinh?date(b.NgaySinh):null,text(b.GioiTinh,'giới tính',20,false),email,phone,text(b.DiaChi,'địa chỉ',255,false),choice(b.TrangThai||'Hoạt động',['Hoạt động','Khóa'],'Trạng thái'),role,mediaUrl(b.AnhDaiDien)]);
     if(role==='Bệnh nhân')await ensureSelfProfile(client,id);
     return result.rows[0];
@@ -41,7 +41,7 @@ exports.updateUser = handle(async (req,res) => {
     if(existing.rows[0].IdTaiKhoan===req.user.IdTaiKhoan&&(role!=='Admin'||state!=='Hoạt động'))fail(400,'Admin không thể tự khóa hoặc tự đổi vai trò của mình.');
     let hash=null;
     if(req.body?.MatKhau){const password=text(req.body.MatKhau,'mật khẩu',72);if(password.length<6)fail(400,'Mật khẩu phải có ít nhất 6 ký tự.');hash=await bcrypt.hash(password,10);}
-    const result=await client.query(`UPDATE TAIKHOAN SET HoTen=$1,VaiTro=$2,TrangThai=$3,SoDienThoai=$4,Email=$5,DiaChi=$6,MatKhau=COALESCE($7,MatKhau),AnhDaiDien=$9
+    const result=await client.query(`UPDATE TAIKHOAN SET HoTen=$1,VaiTro=$2,TrangThai=$3,SoDienThoai=$4,Email=$5,DiaChi=$6,MatKhau=COALESCE($7,MatKhau),AnhDaiDien=$9,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh'
       WHERE IdTaiKhoan=$8 RETURNING ${userColumns}`,[text(body.HoTen,'họ tên'),role,state,phone,email,text(body.DiaChi,'địa chỉ',255,false),hash,req.params.id,mediaUrl(body.AnhDaiDien)]);
     if(role==='Bệnh nhân')await ensureSelfProfile(client,req.params.id);
     return result.rows[0];

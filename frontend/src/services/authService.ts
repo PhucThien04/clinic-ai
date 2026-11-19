@@ -1,6 +1,6 @@
 import API from './api';
 
-export interface LoginCredentials {
+interface LoginCredentials {
   TenTaiKhoan: string;
   MatKhau: string;
 }

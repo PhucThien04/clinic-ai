@@ -1,4 +1,4 @@
-export const cropSize=256;
+const cropSize=256;
 export interface CropPosition {x:number;y:number}
 export function cropGeometry(width:number,height:number,zoom:number,position:CropPosition){
   const scale=Math.max(cropSize/width,cropSize/height)*zoom;

@@ -29,7 +29,8 @@ export function useClinicalQueue(doctorView = false) {
       if (request === requestId.current) setLoadingQueue(false);
     }
   }, [date, all]);
-  useEffect(() => { void refreshQueue(); return () => { requestId.current++; }; }, [refreshQueue]);
+  const invalidate=useCallback(()=>{requestId.current++;},[]);
+  useEffect(() => { let active=true;queueMicrotask(()=>{if(active)void refreshQueue();});return()=>{active=false;invalidate();}; }, [refreshQueue,invalidate]);
   const filteredQueue = useMemo(() => {
     const keyword = normalizeClinicalSearch(search);
     return queue.filter(item => (!onlyMine || !isDoctor || item.LaCaCuaToi)
