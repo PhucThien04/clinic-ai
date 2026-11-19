@@ -1,10 +1,10 @@
 import type {FormEvent,ReactNode} from 'react';
 export interface FormField {name:string;label:string;type?:string;required?:boolean;maxLength?:number;readOnly?:boolean;
   min?:string;step?:string;pattern?:string;options?:{value:string;label:string}[]}
-export function ManagementForm({title,fields,values,onChange,onSubmit,saving,onCancel,children}:{title:string;fields:FormField[];values:object;
-  onChange:(name:string,value:string)=>void;onSubmit:(event:FormEvent)=>void;saving:boolean;onCancel?:()=>void;children?:ReactNode}){
+export function ManagementForm({title,fields,values,onChange,onSubmit,saving,onCancel,children,hideTitle=false}:{title:string;fields:FormField[];values:object;
+  onChange:(name:string,value:string)=>void;onSubmit:(event:FormEvent)=>void;saving:boolean;onCancel?:()=>void;children?:ReactNode;hideTitle?:boolean}){
   return <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-    <h2 className="mb-4 text-lg font-bold text-slate-900">{title}</h2>
+    {!hideTitle&&<h2 className="mb-4 text-lg font-bold text-slate-900">{title}</h2>}
     {children}
     <form onSubmit={onSubmit}><fieldset disabled={saving} className="space-y-4 disabled:opacity-60">
       {fields.map(field=><label key={field.name} className="block text-sm font-medium text-slate-700">{field.label}

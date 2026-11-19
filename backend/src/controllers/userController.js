@@ -4,6 +4,7 @@ const { generateId } = require('../utils/idGenerator');
 const { ensureSelfProfile } = require('../services/patientProfileService');
 const { handle, transaction, columns, text, choice, roles, date, fail } = require('../utils/managementUtils');
 const userColumns = columns(['IdTaiKhoan','TenTaiKhoan','HoTen','CCCD','GioiTinh','Email','SoDienThoai','DiaChi','TrangThai','VaiTro']) + `,TO_CHAR(NgaySinh,'YYYY-MM-DD') AS "NgaySinh"`;
+const deletionConflict='Không thể xóa tài khoản đã phát sinh dữ liệu nghiệp vụ liên quan. Vui lòng chuyển trạng thái sang Khóa.';
 const contact = body => {
   const phone=text(body.SoDienThoai,'số điện thoại',10);
   if(!/^\d{10}$/.test(phone))fail(400,'Số điện thoại phải gồm 10 chữ số.');
@@ -45,4 +46,40 @@ exports.updateUser = handle(async (req,res) => {
     return result.rows[0];
   });
   res.json({message:'Đã cập nhật tài khoản.',user});
+});
+
+exports.deleteUser = handle(async (req,res) => {
+  try {
+    await transaction(async client => {
+      const result=await client.query('SELECT IdTaiKhoan AS "IdTaiKhoan",VaiTro AS "VaiTro" FROM TAIKHOAN WHERE IdTaiKhoan=$1 FOR UPDATE',[req.params.id]);
+      if(!result.rows.length)fail(404,'Không tìm thấy tài khoản.');
+      const account=result.rows[0];
+      if(account.IdTaiKhoan===req.user.IdTaiKhoan)fail(400,'Không thể tự xóa tài khoản Admin đang đăng nhập.');
+      const numeric=['NhietDo','HuyetApTamThu','HuyetApTamTruong','NhipTim','NhipTho','CanNang','ChieuCao'];
+      const notes=['TrieuChung','MucDo','GhiChu','ChuanDoan','KetLuan'];
+      const profiles=await client.query(`SELECT IdHoSoBenhNhan AS "IdHoSoBenhNhan",
+        (LoaiThongTin=0 AND ${numeric.map(field=>`${field} IS NULL`).join(' AND ')}
+          AND ${notes.map(field=>`NULLIF(BTRIM(${field}),'') IS NULL`).join(' AND ')}
+          AND ThoiDiemKhoiPhat IS NULL AND ThoiDiemCapNhat IS NULL) AS "IsEmpty"
+        FROM HOSOBENHNHAN WHERE IdTaiKhoan=$1 FOR UPDATE`,[account.IdTaiKhoan]);
+      if(profiles.rows.length&&(account.VaiTro!=='Bệnh nhân'||profiles.rows.some(row=>!row.IsEmpty)))fail(409,deletionConflict);
+      // Kiểm tra nghiệp vụ trước để không phụ thuộc một FK có vô tình dùng CASCADE hay không.
+      const linked=await client.query(`SELECT (
+        EXISTS(SELECT 1 FROM LICHDAT WHERE IdTaiKhoan=$1)
+        OR EXISTS(SELECT 1 FROM LICHLAMVIEC WHERE IdBacSi=$1 OR NguoiCapNhat=$1)
+        OR EXISTS(SELECT 1 FROM PHONGKHAM WHERE ChuPhongKham=$1)
+        OR EXISTS(SELECT 1 FROM TIENSUBENH WHERE NguoiGhiNhan=$1)
+        OR EXISTS(SELECT 1 FROM CHITIETLICHDAT c JOIN HOSOBENHNHAN h ON h.IdHoSoBenhNhan=c.IdHoSoBenhNhan WHERE h.IdTaiKhoan=$1)
+        OR EXISTS(SELECT 1 FROM TIENSUBENH t JOIN HOSOBENHNHAN h ON h.IdHoSoBenhNhan=t.IdHoSoBenhNhan WHERE h.IdTaiKhoan=$1)
+        OR EXISTS(SELECT 1 FROM THONGTINNGUOITHAN n JOIN HOSOBENHNHAN h ON h.IdHoSoBenhNhan=n.IdHoSoBenhNhan WHERE h.IdTaiKhoan=$1)
+      ) AS "HasBusinessData"`,[account.IdTaiKhoan]);
+      if(linked.rows[0].HasBusinessData)fail(409,deletionConflict);
+      if(account.VaiTro==='Bệnh nhân')await client.query('DELETE FROM HOSOBENHNHAN WHERE IdTaiKhoan=$1',[account.IdTaiKhoan]);
+      await client.query('DELETE FROM TAIKHOAN WHERE IdTaiKhoan=$1',[account.IdTaiKhoan]);
+    });
+  } catch(error) {
+    if(error.code==='23503')fail(409,deletionConflict);
+    throw error;
+  }
+  res.json({message:'Đã xóa tài khoản.'});
 });

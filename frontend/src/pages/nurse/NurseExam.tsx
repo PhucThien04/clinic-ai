@@ -1,15 +1,10 @@
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout';
-import { ClinicalAccess } from '../../components/clinical/ClinicalAccess';
 import { ClinicalQueuePanel } from '../../components/clinical/ClinicalQueuePanel';
 import { PatientExamSummary } from '../../components/clinical/PatientExamSummary';
 import { useNurseExam } from '../../hooks/useNurseExam';
 import { vitalInputs } from '../../utils/clinicalExamUtils';
 
 export default function NurseExam() {
-  return <ClinicalAccess roles={['Y tá', 'Admin', 'Chủ phòng khám']}><NurseWorkspace /></ClinicalAccess>;
-}
-
-function NurseWorkspace() {
   const exam = useNurseExam();
   return <DashboardLayout>
     <div className="mx-auto max-w-7xl space-y-6">

@@ -5,6 +5,7 @@ export interface UserRecord {
 }
 export interface UserPayload {TenTaiKhoan?:string;MatKhau?:string;HoTen:string;CCCD?:string;NgaySinh?:string;GioiTinh?:string;Email:string;SoDienThoai:string;DiaChi:string;TrangThai:string;VaiTro:string}
 export const adminService={
+  deleteUser:(id:string)=>API.delete(`/users/${encodeURIComponent(id)}`),
   getUsers:async()=>(await API.get<UserRecord[]>('/users')).data,
   saveUser:(id:string|null,data:UserPayload)=>id?API.put(`/users/${encodeURIComponent(id)}`,data):API.post('/users',data),
 };

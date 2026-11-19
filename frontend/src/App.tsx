@@ -14,6 +14,7 @@ import PatientMedicalHistory from "./pages/patient/PatientMedicalHistory";
 import StaffWorkspace from './pages/staff/StaffWorkspace';
 import AdminUsers from './pages/admin/AdminUsers';
 import ClinicManagement from './pages/owner/ClinicManagement';
+import {ClinicalAccess} from './components/clinical/ClinicalAccess';
 
 export default function App(): React.JSX.Element {
   return (
@@ -63,15 +64,15 @@ export default function App(): React.JSX.Element {
           }
         />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/patient-appointments" element={<PatientAppointments />} />
-        <Route path="/patient-history" element={<PatientMedicalHistory />} />
+        <Route path="/patient-appointments" element={<ClinicalAccess roles={['Bệnh nhân']}><PatientAppointments /></ClinicalAccess>} />
+        <Route path="/patient-history" element={<ClinicalAccess roles={['Bệnh nhân']}><PatientMedicalHistory /></ClinicalAccess>} />
 
         {/* Các trang Nghiệp vụ Nội bộ (Sử dụng DashboardLayout bên trong component của chúng) */}
-        <Route path="/nurse" element={<NurseExam />} />
-        <Route path="/doctor" element={<DoctorExam />} />
-        <Route path="/staff" element={<StaffWorkspace />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/owner/clinic" element={<ClinicManagement />} />
+        <Route path="/nurse" element={<ClinicalAccess roles={['Y tá']}><NurseExam /></ClinicalAccess>} />
+        <Route path="/doctor" element={<ClinicalAccess roles={['Bác sĩ']}><DoctorExam /></ClinicalAccess>} />
+        <Route path="/staff" element={<ClinicalAccess roles={['Nhân viên']}><StaffWorkspace /></ClinicalAccess>} />
+        <Route path="/admin/users" element={<ClinicalAccess roles={['Admin']}><AdminUsers /></ClinicalAccess>} />
+        <Route path="/owner/clinic" element={<ClinicalAccess roles={['Chủ phòng khám']}><ClinicManagement /></ClinicalAccess>} />
       </Routes>
     </Router>
   );

@@ -1,5 +1,7 @@
 import type { useClinicalQueue } from '../../hooks/useClinicalQueue';
 import { formatDate } from '../../utils/dateUtils';
+import {RefreshCw} from 'lucide-react';
+import {IconButton} from '../management/IconButton';
 
 type Props = { state: ReturnType<typeof useClinicalQueue>; selectedId?: string;
   busy?: boolean; onSelect: (id: string) => void };
@@ -8,8 +10,7 @@ export function ClinicalQueuePanel({ state, selectedId, busy, onSelect }: Props)
   return <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className="mb-4 flex items-center justify-between gap-3">
       <h2 className="font-bold text-slate-900">Danh sách lịch khám</h2>
-      <button type="button" onClick={() => void state.refreshQueue()} disabled={state.loadingQueue || busy}
-        className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-sky-600 disabled:opacity-50">Tải lại</button>
+      <IconButton label="Tải lại" icon={RefreshCw} spinning={state.loadingQueue} onClick={() => void state.refreshQueue()} disabled={state.loadingQueue || busy}/>
     </div>
     <div className="space-y-3">
       {!state.all && <label className="block text-sm font-medium text-slate-700">Ngày khám (giờ Việt Nam)

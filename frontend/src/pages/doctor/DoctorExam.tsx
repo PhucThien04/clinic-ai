@@ -1,6 +1,5 @@
 import { Sparkles } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout';
-import { ClinicalAccess } from '../../components/clinical/ClinicalAccess';
 import { ClinicalQueuePanel } from '../../components/clinical/ClinicalQueuePanel';
 import { PatientExamSummary } from '../../components/clinical/PatientExamSummary';
 import { useDoctorExam } from '../../hooks/useDoctorExam';
@@ -8,10 +7,6 @@ import { vitalInputs } from '../../utils/clinicalExamUtils';
 import { formatDate } from '../../utils/dateUtils';
 
 export default function DoctorExam() {
-  return <ClinicalAccess roles={['Bác sĩ', 'Admin', 'Chủ phòng khám']}><DoctorWorkspace /></ClinicalAccess>;
-}
-
-function DoctorWorkspace() {
   const exam = useDoctorExam();
   const record = exam.patientRecord;
   return <DashboardLayout>
