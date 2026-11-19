@@ -29,6 +29,7 @@ app.use('/api/clinic', clinicRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Route kiểm tra server hoạt động
 app.get('/', (req, res) => {

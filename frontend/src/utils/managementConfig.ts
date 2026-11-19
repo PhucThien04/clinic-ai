@@ -1,5 +1,8 @@
 export const userRoles=['Bệnh nhân','Nhân viên','Y tá','Bác sĩ','Admin','Chủ phòng khám'];
 export const options=(values:string[])=>values.map(value=>({value,label:value}));
+export const selfAdminWarning='Không thể tự khóa, tự xóa hoặc tự đổi vai trò Admin đang đăng nhập.';
+export const isUnsafeSelfEdit=(editingId:string|null,currentId:string|undefined,form:{TrangThai:string;VaiTro:string})=>
+  !!editingId&&editingId===currentId&&(form.TrangThai!=='Hoạt động'||form.VaiTro!=='Admin');
 interface ActorLink {path:string;label:string;icon:'calendar'|'file'|'users'|'clinic'|'nurse'|'doctor'}
 interface ActorNavigation {group:string;items:ActorLink[]}
 const actorNavigation:Record<string,ActorNavigation>={

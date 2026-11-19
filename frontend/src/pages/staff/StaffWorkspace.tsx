@@ -14,7 +14,8 @@ export default function StaffWorkspace(){
     <ManagementTabs value={staff.tab} onChange={staff.setTab} disabled={staff.saving} tabs={[{value:'appointments',label:'Duyệt lịch đặt khám'},{value:'schedules',label:'Quản lý ca làm việc'}]}/>
     <ManagementMessages error={staff.error} message={staff.message} loading={staff.loading}/>
     <div className="flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-white p-4">
-      <label className="text-sm text-slate-600">Ngày (để trống xem tất cả)<input type="date" value={staff.date} onChange={event=>staff.setDate(event.target.value)} className="ml-2 rounded-lg border border-slate-200 p-2"/></label>
+      <label className="text-sm text-slate-600">Ngày khám<input type="date" value={staff.date} onChange={event=>staff.setDate(event.target.value)} className="ml-2 rounded-lg border border-slate-200 p-2"/></label>
+      {staff.date&&<button type="button" onClick={()=>staff.setDate('')} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-sky-600 hover:bg-sky-50">Tất cả ngày</button>}
       {staff.tab==='appointments'&&<label className="text-sm text-slate-600">Trạng thái<select value={staff.status} onChange={event=>staff.setStatus(event.target.value)} className="ml-2 rounded-lg border border-slate-200 p-2"><option value="">Tất cả</option>{['Đã đặt','Đã xác nhận','Đang khám','Hoàn thành','Đã hủy'].map(state=><option key={state}>{state}</option>)}</select></label>}
       <input aria-label="Tìm kiếm" type="search" value={staff.search} onChange={event=>staff.setSearch(event.target.value)} placeholder={staff.tab==='appointments'?'Tên bệnh nhân / mã hồ sơ / SĐT':'Tên bác sĩ / mã ca'} className="min-w-56 flex-1 rounded-lg border border-slate-200 p-2 text-sm"/>
     </div>

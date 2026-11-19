@@ -5,6 +5,7 @@ import type {UserRecord} from '../services/adminService';
 import {clinicalError,normalizeClinicalSearch} from '../utils/clinicalExamUtils';
 import {useManagementAction} from './useManagementAction';
 import {authService} from '../services/authService';
+import {isUnsafeSelfEdit,selfAdminWarning} from '../utils/managementConfig';
 const emptyUser={TenTaiKhoan:'',MatKhau:'',HoTen:'',CCCD:'',NgaySinh:'',GioiTinh:'',Email:'',SoDienThoai:'',DiaChi:'',TrangThai:'Hoạt động',VaiTro:'Nhân viên'};
 export function useAdminUsers(){
   const currentUserId=authService.getCurrentUser()?.IdTaiKhoan as string|undefined;
@@ -16,7 +17,9 @@ export function useAdminUsers(){
   const filteredUsers=useMemo(()=>{const keyword=normalizeClinicalSearch(search);return users.filter(row=>(!role||row.VaiTro===role)&&(!state||row.TrangThai===state)&&normalizeClinicalSearch(`${row.HoTen} ${row.TenTaiKhoan} ${row.SoDienThoai} ${row.IdTaiKhoan}`).includes(keyword));},[users,role,state,search]);
   const openUser=(row?:UserRecord)=>{setEditingId(row?.IdTaiKhoan||null);setForm(row?{TenTaiKhoan:row.TenTaiKhoan,MatKhau:'',HoTen:row.HoTen,CCCD:row.CCCD,NgaySinh:row.NgaySinh||'',GioiTinh:row.GioiTinh||'',Email:row.Email||'',SoDienThoai:row.SoDienThoai,DiaChi:row.DiaChi||'',TrangThai:row.TrangThai,VaiTro:row.VaiTro}:emptyUser);setFormOpen(true);action.setError('');};
   const changeForm=(name:string,value:string)=>setForm(previous=>({...previous,[name]:value}));
-  const saveUser=async(event:FormEvent)=>{event.preventDefault();if(await action.runAction(()=>adminService.saveUser(editingId,form),'Đã lưu tài khoản.')){setFormOpen(false);await load();}};
+  const selfWarning=isUnsafeSelfEdit(editingId,currentUserId,form)?selfAdminWarning:
+    /Không thể tự xóa tài khoản Admin|Admin không thể tự khóa/.test(action.error)?action.error:'';
+  const saveUser=async(event:FormEvent)=>{event.preventDefault();if(isUnsafeSelfEdit(editingId,currentUserId,form))return;if(await action.runAction(()=>adminService.saveUser(editingId,form),'Đã lưu tài khoản.')){setFormOpen(false);await load();}};
   const deleteUser=async(id:string)=>{
     if(id===currentUserId){action.setError('Không thể tự xóa tài khoản Admin đang đăng nhập.');return;}
     const user=users.find(row=>row.IdTaiKhoan===id);
@@ -26,5 +29,5 @@ export function useAdminUsers(){
       await load();
     }
   };
-  return {...action,users,filteredUsers,loading,role,setRole,state,setState,search,setSearch,form,editingId,formOpen,setFormOpen,openUser,changeForm,saveUser,deleteUser,currentUserId,load};
+  return {...action,selfWarning,users,filteredUsers,loading,role,setRole,state,setState,search,setSearch,form,editingId,formOpen,setFormOpen,openUser,changeForm,saveUser,deleteUser,currentUserId,load};
 }

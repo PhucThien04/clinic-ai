@@ -19,7 +19,7 @@ exports.getManagedAppointments = management.handle(async (req,res) => {
     JOIN LICHLAMVIEC l ON l.IdLichLamViec=c.IdLichLamViec JOIN TAIKHOAN bs ON bs.IdTaiKhoan=l.IdBacSi
     JOIN PHONGKHAM pk ON pk.IdPhongKham=l.IdPhongKham LEFT JOIN THONGTINNGUOITHAN nt ON nt.IdHoSoBenhNhan=h.IdHoSoBenhNhan
     WHERE ($1::date IS NULL OR l.NgayLamViec=$1::date) AND ($2::text IS NULL OR d.TrangThai=$2)
-    ORDER BY l.NgayLamViec DESC,l.GioBatDau,c.IdChiTietLD`,[day,status]);
+    ORDER BY CASE WHEN d.TrangThai='Đã đặt' THEN 0 ELSE 1 END,l.NgayLamViec,l.GioBatDau,c.IdChiTietLD`,[day,status]);
   res.json(result.rows);
 });
 exports.updateAppointmentStatus = management.handle(async (req,res) => {

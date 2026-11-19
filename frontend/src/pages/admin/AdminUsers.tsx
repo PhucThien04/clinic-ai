@@ -10,7 +10,8 @@ export default function AdminUsers(){
   const admin=useAdminUsers();
   return <DashboardLayout><div className="mx-auto max-w-7xl space-y-5">
     <header><h1 className="text-2xl font-bold text-slate-900">Quản lý tài khoản</h1><p className="mt-1 text-sm text-slate-500">Tạo tài khoản, phân vai trò và khóa/mở khóa người dùng.</p></header>
-    <ManagementMessages error={admin.error} message={admin.message} loading={admin.loading}/>
+    <ManagementMessages error={admin.selfWarning?'':admin.error} message={admin.message} loading={admin.loading}/>
+    {!admin.formOpen&&admin.selfWarning&&<p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{admin.selfWarning}</p>}
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
       <input aria-label="Tìm tài khoản" type="search" value={admin.search} onChange={event=>admin.setSearch(event.target.value)} placeholder="Tên, tài khoản, số điện thoại..." className="min-w-56 flex-1 rounded-lg border border-slate-200 p-2 text-sm"/>
       <select aria-label="Lọc vai trò" value={admin.role} onChange={event=>admin.setRole(event.target.value)} className="rounded-lg border border-slate-200 p-2 text-sm"><option value="">Tất cả vai trò</option>{userRoles.map(role=><option key={role}>{role}</option>)}</select>
@@ -44,8 +45,8 @@ export default function AdminUsers(){
         {name:'DiaChi',label:'Địa chỉ',required:false},{name:'VaiTro',label:'Vai trò',options:options(userRoles)},
         {name:'TrangThai',label:'Trạng thái',options:options(['Hoạt động','Khóa'])},
       ]}>
-        <ManagementMessages error={admin.error} message="" loading={false}/>
-        <p className="my-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Không thể tự khóa, tự xóa hoặc tự đổi vai trò Admin đang đăng nhập.</p>
+        <ManagementMessages error={admin.selfWarning?'':admin.error} message="" loading={false}/>
+        {admin.selfWarning&&<p role="alert" className="my-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{admin.selfWarning}</p>}
       </ManagementForm>
     </ManagementModal>}
   </div></DashboardLayout>;

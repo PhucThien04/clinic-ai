@@ -1,4 +1,5 @@
 import type {ReactNode} from 'react';
+import {NotificationBell} from '../notifications/NotificationBell';
 import {Link,useLocation,useNavigate} from 'react-router-dom';
 import {Activity,LogOut,LogIn,UserRound} from 'lucide-react';
 import {authService} from '../../services/authService';
@@ -13,14 +14,17 @@ export default function Layout({children}:{children:ReactNode}){
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-[1440px] items-center gap-4 px-4 py-3 lg:px-6">
         <Link to="/" className="flex shrink-0 items-center gap-2 text-base font-extrabold text-slate-900 no-underline"><Activity size={27} className="text-sky-600"/><span className="hidden lg:inline">NHA KHOA ĐỨC TÍN</span></Link>
-        <nav aria-label="Điều hướng chính" className="flex min-w-0 flex-1 flex-nowrap items-center justify-end gap-1 overflow-x-auto">
+        <nav aria-label="Điều hướng chính" className="flex min-w-0 flex-1 flex-nowrap items-center justify-end gap-1">
+          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto lg:justify-end">
           <Link to="/" className={linkClass('/')}>Trang chủ</Link>
           <Link to="/dich-vu" className={linkClass('/dich-vu')}>Dịch vụ</Link>
           <Link to="/su-kien" className={linkClass('/su-kien')}>Sự kiện & Ưu đãi</Link>
           {workspace&&<Link to={workspace.path} className={linkClass(workspace.path)}>{workspace.label}</Link>}
+          </div>
           {user?<>
-            <Link to="/profile" title={`${user.HoTen} (${user.VaiTro})`} className="ml-2 inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 no-underline"><UserRound size={16}/><span className="max-w-32 truncate">{user.HoTen}</span></Link>
-            <button type="button" onClick={()=>{authService.logout();navigate('/login');}} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-red-500 hover:bg-red-50"><LogOut size={16}/>Đăng xuất</button>
+            <NotificationBell/>
+            <Link to="/profile" aria-label="Hồ sơ cá nhân" title={`${user.HoTen} (${user.VaiTro})`} className="ml-2 inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 no-underline"><UserRound size={16}/><span className="hidden max-w-32 truncate sm:inline">{user.HoTen}</span></Link>
+            <button type="button" aria-label="Đăng xuất" onClick={()=>{authService.logout();navigate('/login');}} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-red-500 hover:bg-red-50"><LogOut size={16}/><span className="hidden sm:inline">Đăng xuất</span></button>
           </>:<Link to="/login" className="ml-2 inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white no-underline"><LogIn size={16}/>Đăng nhập</Link>}
         </nav>
       </div>

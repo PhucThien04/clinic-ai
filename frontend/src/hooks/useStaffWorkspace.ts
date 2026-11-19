@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useMemo,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import type {FormEvent} from 'react';
 import {staffService} from '../services/staffService';
 import type {ManagedAppointment,WorkSchedule,ScheduleResources,SchedulePayload} from '../services/staffService';
@@ -6,18 +6,21 @@ import {clinicalError,getVietnamToday,normalizeClinicalSearch} from '../utils/cl
 import {useManagementAction} from './useManagementAction';
 const emptySchedule:SchedulePayload={IdBacSi:'',IdPhongKham:'',NgayLamViec:getVietnamToday(),GioBatDau:'08:00',GioKetThuc:'08:30',TrangThai:'Hoạt động',GhiChu:''};
 export function useStaffWorkspace(){
+  const requestId=useRef(0);
   const action=useManagementAction();const [tab,setTab]=useState('appointments');
-  const [date,setDate]=useState(getVietnamToday);const [status,setStatus]=useState('');const [search,setSearch]=useState('');
+  const [date,setDate]=useState('');const [status,setStatus]=useState('');const [search,setSearch]=useState('');
   const [appointments,setAppointments]=useState<ManagedAppointment[]>([]);const [schedules,setSchedules]=useState<WorkSchedule[]>([]);
   const [resources,setResources]=useState<ScheduleResources>({doctors:[],clinics:[]});const [loading,setLoading]=useState(false);
   const [editingId,setEditingId]=useState<string|null>(null);const [formOpen,setFormOpen]=useState(false);const [form,setForm]=useState(emptySchedule);
-  const load=useCallback(async()=>{setLoading(true);try{
+  const load=useCallback(async()=>{const current=++requestId.current;setLoading(true);try{
     const [appointments,schedules,resources]=await Promise.all([staffService.getAppointments({date:date||undefined,status:status||undefined}),staffService.getSchedules(),staffService.getResources()]);
+    if(current!==requestId.current)return;
     setAppointments(appointments);setSchedules(schedules);setResources(resources);action.setError('');
-  }catch(error){action.setError(clinicalError(error));}finally{setLoading(false);}},[date,status,action.setError]);
-  useEffect(()=>{void load();},[load]);
+  }catch(error){if(current===requestId.current)action.setError(clinicalError(error));}finally{if(current===requestId.current)setLoading(false);}},[date,status,action.setError]);
+  useEffect(()=>{void load();return()=>{requestId.current++;};},[load]);
   const keyword=normalizeClinicalSearch(search);
-  const filteredAppointments=useMemo(()=>appointments.filter(row=>normalizeClinicalSearch(`${row.TenBenhNhan||''} ${row.IdHoSoBenhNhan} ${row.SoDienThoai||''}`).includes(keyword)),[appointments,keyword]);
+  const filteredAppointments=useMemo(()=>appointments.filter(row=>normalizeClinicalSearch(`${row.TenBenhNhan||''} ${row.IdHoSoBenhNhan} ${row.SoDienThoai||''}`).includes(keyword))
+    .sort((a,b)=>Number(b.TrangThai==='Đã đặt')-Number(a.TrangThai==='Đã đặt')||`${a.NgayLamViec} ${a.GioBatDau}`.localeCompare(`${b.NgayLamViec} ${b.GioBatDau}`)),[appointments,keyword]);
   const filteredSchedules=useMemo(()=>schedules.filter(row=>(!date||row.NgayLamViec===date)&&normalizeClinicalSearch(`${row.TenBacSi} ${row.IdLichLamViec}`).includes(keyword)),[schedules,date,keyword]);
   const updateStatus=async(row:ManagedAppointment,target:string)=>{
     if(target==='Đã hủy'&&!window.confirm(`Hủy lịch khám của ${row.TenBenhNhan||row.IdHoSoBenhNhan}?`))return;
