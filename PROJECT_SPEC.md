@@ -1,6 +1,6 @@
 # Clinic AI — Đặc tả Kỹ thuật & Nghiệp vụ Dự án (Single Source of Truth)
 
-**Phiên bản:** 2.8 (Dọn code và bỏ DDL runtime)
+**Phiên bản:** 3.0 (Trợ lý AI lâm sàng FastAPI)
 
 **Cập nhật:** 20/11/2026
 
@@ -89,15 +89,15 @@ Hệ thống gồm **7 tác nhân** với phân quyền chặt chẽ ở Backend
 React Frontend trên host (TypeScript + Vite + Tailwind CSS v4)
        │ REST API (JSON + JWT)
        ▼
-Node.js / Express Backend trên host ── HTTP ── Python / FastAPI (dự kiến)
+Node.js / Express Backend trên host ── HTTP ── Python / FastAPI (:8000)
        │                                           │
        ▼                                           ▼
-PostgreSQL 15 trong Docker                   External AI API (dự kiến)
+PostgreSQL 15 trong Docker                   External AI API (cấu hình qua .env)
 ```
 
 - **Frontend:** React 19, TypeScript 7 cho compiler (`@typescript/native` alias) và TypeScript 6 API cho ESLint (`typescript` alias sang `@typescript/typescript6`), Vite 8, React Router, Axios, Lucide React và **Tailwind CSS v4**. `@tailwindcss/vite` được đăng ký trong `frontend/vite.config.ts`; entry CSS là `frontend/src/index.css` với `@import "tailwindcss";`.
 - **Backend:** Node.js, Express 5, `pg`, JWT (`jsonwebtoken`), bcrypt, dotenv và nodemon. Backend xử lý nghiệp vụ, kiểm tra quyền và truy cập PostgreSQL qua `backend/src/config/db.js`.
-- **AI Service dự kiến:** Python/FastAPI, giao tiếp External AI Provider; **tuyệt đối không** truy cập trực tiếp PostgreSQL. `ai-service/` hiện rỗng, chưa có mã FastAPI, `requirements.txt` hoặc luồng gọi External AI API. Các chức năng AI trong đặc tả là yêu cầu đích, không đồng nghĩa đã triển khai xong.
+- **AI Service đã triển khai:** Python 3.11+ / FastAPI, Pydantic v2, httpx, python-dotenv; cổng 8000. Nhận JSON từ Backend, tính rule-based và gọi Gemini/OpenAI-compatible; không có driver DB, không truy cập PostgreSQL. Thiếu key/lỗi provider trả tổng hợp an toàn HTTP 200.
 - **Database:** PostgreSQL 15 trong Docker, image `postgres:15`. Môi trường đã kiểm tra có container `datn`, publish cổng host `5432`, lưu dữ liệu ở Docker volume gắn tại `/var/lib/postgresql/data`. Backend chạy trên host dùng `DB_HOST=localhost`, `DB_PORT=5432`; chưa có Dockerfile hoặc Docker Compose trong repo.
 
 ### 4.1. Clean Code & phân lớp Frontend
@@ -120,7 +120,18 @@ Sơ đồ các thư mục nguồn và tệp cấu hình chính bên dưới đ�
 
 ```text
 clinic-ai/
-├── ai-service/               # Đang rỗng; dành cho Python/FastAPI dự kiến
+├── ai-service/               # FastAPI; không kết nối DB
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py           # /health, /analyze
+│   │   ├── config.py
+│   │   ├── schemas.py
+│   │   ├── rules/            # __init__.py, vital_rules.py
+│   │   ├── prompts/          # __init__.py, clinical_prompt.py
+│   │   └── services/         # __init__.py, llm_service.py
+│   ├── tests/                # Cục bộ, Git ignore
+│   ├── .env.example
+│   └── requirements.txt
 ├── backend/
 │   ├── src/
 │   │   ├── config/           # db.js: PostgreSQL Pool qua pg
@@ -130,6 +141,7 @@ clinic-ai/
 │   │   ├── services/        # Nghiệp vụ dùng chung, tạo hồ sơ bản thân
 │   │   ├── utils/           # Sinh ID CHAR(13)
 │   │   └── server.js        # Entry point Backend
+│   ├── migrations/          # SQL chạy thủ công, không gắn startup
 │   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
 │   ├── .env.example         # Mẫu cấu hình Backend có nội dung
 │   ├── package.json
@@ -163,16 +175,16 @@ clinic-ai/
 └── README.md
 ```
 
-Không có `.ai-workflow/`, `database/` hoặc `docs/` trong workspace. `ai-service/` đang rỗng, có thể không xuất hiện khi clone vì Git không lưu thư mục rỗng. `.env.example` tại gốc hiện rỗng; mẫu cấu hình Backend có nội dung là `backend/.env.example`. Các thư mục `tests/` giữ cục bộ, được `.gitignore` bỏ qua và không còn trong Git tracking; clone mới không có bộ test. Đây là chính sách lưu trữ, không thay đổi yêu cầu kiểm thử nghiệp vụ.
+Không có `.ai-workflow/`, `database/` hoặc `docs/` trong workspace. `ai-service/` đã triển khai FastAPI, rule engine và adapter LLM. `.env.example` tại gốc hiện rỗng; mẫu cấu hình Backend có nội dung là `backend/.env.example`. Các thư mục `tests/` giữ cục bộ, được `.gitignore` bỏ qua và không còn trong Git tracking; clone mới không có bộ test. Đây là chính sách lưu trữ, không thay đổi yêu cầu kiểm thử nghiệp vụ.
 
 ### 4.4. Khởi tạo môi trường Development
 
-1. Chuẩn bị Node.js **22.14+**, npm và Docker Desktop với Linux containers. Vite đang cài đặt chấp nhận Node.js `^20.19.0 || >=22.12.0`; mốc 22.14+ cũng đáp ứng utility test. Python chỉ cần khi bắt đầu triển khai FastAPI.
+1. Chuẩn bị Node.js **22.14+**, npm và Docker Desktop với Linux containers. Vite đang cài đặt chấp nhận Node.js `^20.19.0 || >=22.12.0`; mốc 22.14+ cũng đáp ứng utility test. Python 3.11+ cần cho AI Service (môi trường kiểm thử 3.13).
 2. Kiểm tra container PostgreSQL bằng `docker ps -a`; nếu container `datn` đã có nhưng dừng, dùng `docker start datn`. Kiểm tra sẵn sàng bằng `docker exec datn pg_isready -U postgres -d clinic_duc_tin`. Hướng dẫn tạo container PostgreSQL 15 mới và volume riêng nằm trong [README, mục 4.1](./README.md#41-postgresql-qua-docker).
-3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo chưa có SQL bootstrap/seed/migration. Với môi trường mới, nhập schema/dump theo mục 5; ba cột ảnh và `ThoiDiemCapNhat` của 5 bảng TAIKHOAN/SUKIEN/DICHVU/LICHLAMVIEC/LICHDAT phải có sẵn. Backend khởi động bằng app.listen trực tiếp, không chạy ALTER TABLE, CREATE FUNCTION/TRIGGER hoặc sửa schema trong request. TIENSUBENH.IdChiTietLD phải nullable theo đặc tả; đã bỏ fallback tự DROP NOT NULL. Integration test clone schema hiện có và không gọi DDL từ mã ứng dụng.
+3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo chưa có SQL bootstrap/seed; có migration thủ công riêng cho nội dung AI. Với môi trường mới, nhập schema/dump theo mục 5; ba cột ảnh và `ThoiDiemCapNhat` của 5 bảng TAIKHOAN/SUKIEN/DICHVU/LICHLAMVIEC/LICHDAT phải có sẵn. Backend khởi động bằng app.listen trực tiếp, không chạy ALTER TABLE, CREATE FUNCTION/TRIGGER hoặc sửa schema trong request. TIENSUBENH.IdChiTietLD phải nullable theo đặc tả; đã bỏ fallback tự DROP NOT NULL. Integration test clone schema hiện có và không gọi DDL từ mã ứng dụng.
 4. Nếu chưa có `backend/.env`, sao chép `backend/.env.example` vào đó rồi điền `PORT`, `DB_USER`, `DB_HOST`, `DB_NAME`, `DB_PASSWORD`, `DB_PORT`, `JWT_SECRET`. Mặc định database `clinic_duc_tin`; mật khẩu phải khớp cấu hình PostgreSQL. Chạy Backend từ `backend/` để dotenv đọc đúng tệp. Nếu sau này Backend chạy trong Docker, dùng tên dịch vụ/container DB trên cùng network làm `DB_HOST`.
 5. Tại `backend/`, chạy `npm ci` rồi `npm run dev` (Express `http://localhost:5000`). Tại terminal khác trong `frontend/`, chạy `npm ci` rồi `npm run dev` (Vite thường `http://localhost:5173`). Axios hiện dùng `http://localhost:5000/api`.
-6. Chưa có lệnh khởi động AI Service có thể thực thi trong repo. Chỉ thêm hướng dẫn pip/uvicorn sau khi có dependency và entry point FastAPI thật. Trên PowerShell chặn `npm.ps1`, dùng `npm.cmd`.
+6. Trong `ai-service/`: `python -m venv .venv`, `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`; nếu chưa có .env thì sao chép `.env.example`. Chạy `.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000`. Trên Linux/macOS dùng `.venv/bin/python`. Backend cần AI_SERVICE_URL (mặc định http://localhost:8000) và AI_SERVICE_TIMEOUT_MS (25000). Không ghi đè .env hiện có; trên PowerShell chặn npm.ps1 dùng npm.cmd.
 
 ---
 
@@ -308,7 +320,7 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 
 ## 6. Danh sách REST API Endpoints (Backend Port `5000`)
 
-Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng khám, dịch vụ và sự kiện bên dưới đã được đăng ký trong mã nguồn. `POST /api/ai/analyze` vẫn là **endpoint dự kiến**; AI hiện chỉ có API lưu/đọc kết quả tại Backend.
+Các endpoint bên dưới, bao gồm `POST /api/ai/analyze`, đã được đăng ký trong mã nguồn. Phân tích AI đi qua Backend kiểm tra quyền, FastAPI xử lý và lưu 3 kết quả tham khảo vào AIKETQUA.
 
 - **Auth (`/api/auth`):** `POST /register`, `POST /login`
   - Đăng ký công khai luôn tạo vai trò `Bệnh nhân`, bỏ qua `VaiTro` do client gửi. Tài khoản và hồ sơ bản thân (`LoaiThongTin = 0`) được tạo trong cùng transaction.
@@ -349,7 +361,7 @@ Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng kh�
   - `GET /patient/:idHoSoBenhNhan`: cùng quyền đọc như queue. Trả tất cả trường lâm sàng theo PascalCase, thông tin hành chính đúng `LoaiThongTin`, thông tin lượt khám, `tienSuBenh` và `lichSuKhamTruoc`. Gom cùng cá nhân theo `IdTaiKhoan` + `LoaiThongTin`, thêm `HoTen`/`MoiQuanHe` khi là người thân; lịch sử không chứa lượt hiện tại, lượt đã hủy hoặc lượt chưa có chẩn đoán/kết luận.
   - `PUT /vitals`: dành cho `Y tá`, `Admin`, `Chủ phòng khám`; chỉ ghi khi lịch `Đã xác nhận`/`Đang khám`. Nếu còn `Đã đặt`, trả `409` với `Lịch hẹn chưa được nhân viên xác nhận.` Body dùng `idHoSoBenhNhan` và các trường sinh hiệu/triệu chứng; số phải hữu hạn, không âm và phù hợp kiểu cột, giữ nguyên giá trị `0`. Trường không gửi giữ nguyên; trường gửi `null`/chuỗi rỗng được xóa, nhưng phải có ít nhất một giá trị sinh hiệu/triệu chứng. Trong cùng transaction, khóa lượt khám/hồ sơ, cập nhật `HOSOBENHNHAN` và chuyển `LICHDAT` từ `Đã xác nhận` sang `Đang khám`. Các trạng thái khác trả `409`.
   - `PUT /diagnosis`: dành cho `Bác sĩ`, `Admin`, `Chủ phòng khám`. Body gồm `idHoSoBenhNhan`, `ChuanDoan`, `KetLuan` (bắt buộc, tối đa 255 ký tự mỗi trường). Trong transaction, khóa lượt khám/hồ sơ, cập nhật chẩn đoán/kết luận và `ThoiDiemCapNhat = NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh'`, chuyển lịch liên kết chưa hủy sang `Hoàn thành`. Cho phép bác sĩ tải lại và hiệu chỉnh kết luận sẵn có; không tác động hồ sơ của các lượt khác. Lượt đã hủy trả `409`; hồ sơ chưa gắn lịch/không tồn tại trả `404` khi lưu.
-  - Dữ liệu đọc và `RETURNING` đều có alias PascalCase. Frontend tách API trong `examinationService.ts`, logic trong `useNurseExam.ts`/`useDoctorExam.ts` và các Hook dùng chung. Giao diện có bộ lọc ngày/trạng thái, tìm tên/mã hồ sơ, tự nạp form, cảnh báo bệnh nền tông `amber`; khung Phân Tích AI chỉ là placeholder, chưa gọi AI Service.
+  - Dữ liệu đọc và `RETURNING` đều có alias PascalCase. Frontend tách API trong `examinationService.ts`, logic trong `useNurseExam.ts`/`useDoctorExam.ts` và các Hook dùng chung. Giao diện có bộ lọc ngày/trạng thái, tìm tên/mã hồ sơ, tự nạp form, cảnh báo bệnh nền tông `amber`; DoctorExam đã nạp/phân tích AI thật qua Services/Hooks, tách ClinicalAIPanel và giữ form chẩn đoán độc lập khi AI lỗi. Trang Bác sĩ được lazy-load để giảm bundle khởi động.
 - **Clinic (`/api/clinic`):** `GET /info`, `POST /info`, `GET /services`, `POST /services`, `PUT /services/:id`, `DELETE /services/:id`, `GET /events`, `POST /events`, `PUT /events/:id`, `DELETE /events/:id`
   - `GET /info`, `GET /services`, `GET /events` public. Các API ghi yêu cầu JWT và vai trò `Chủ phòng khám`/`Admin`. Danh sách public chỉ có dịch vụ `Hiển thị`/`Hoạt động`, sự kiện `Hiển thị`; `?manage=true` yêu cầu cùng quyền quản lý và trả cả nội dung đã ngừng/ẩn để chỉnh sửa.
   - `POST /info` lấy `ChuPhongKham` từ JWT, cập nhật phòng khám hiện tại (bản ghi đầu theo `IdPhongKham`) hoặc tạo `generateId('PK')` nếu chưa có. `GET /info` trả bản ghi đó hoặc `null` khi chưa cấu hình. Việc tạo ban đầu được khóa để tránh hai bản ghi đồng thời.
@@ -387,7 +399,25 @@ Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng kh�
   - Frontend tách Services/Hooks/Utils/Components. Chuông giữ vị trí Header/Sidebar, badge chưa đọc, đóng khi click ngoài/Escape. `formatRelativeTime` hiển thị `Vừa xong`, số phút/giờ, `Hôm qua`, số ngày trước và `HH:mm · DD/MM/YYYY` theo giờ Việt Nam; nhãn tự cập nhật mỗi 30 giây khi mở. Click item đánh dấu đọc, đóng popover, navigate đầy đủ pathname + query; có nút đánh dấu tất cả.
   - Header phân cách ba tab công khai với workspace bằng vạch dọc; nút workspace có icon vai trò, viền/nền teal riêng và trạng thái active teal đậm. Bệnh nhân dùng nhãn `Đặt lịch khám`; mỗi actor vẫn chỉ thấy workspace của mình.
   - Tải khi đăng nhập, mỗi 45 giây, đổi route/query, mở chuông và sau POST/PUT/PATCH/DELETE thành công qua Axios. Event `notifications-changed` debounce 150ms; nếu đang tải thì xếp lượt tải tiếp để không bỏ sót dữ liệu mới, hủy request khi rời trang/đổi tài khoản. ID đã đọc lưu riêng theo tài khoản trong localStorage (tối đa 1.000), không đồng bộ thiết bị khác. Không dùng WebSocket/SSE; lỗi tải hiển thị trong popover và tự thử lại.
-- **AI (`/api/ai`):** `GET /results?idChiTietLD=...`, `POST /results`, `POST /analyze` (gọi sang FastAPI AI Service)
+- **AI (`/api/ai`) — đã triển khai:** toàn bộ router yêu cầu verifyToken. GET results dành Bác sĩ/Y tá/Admin/Chủ phòng khám; POST results/analyze chỉ Bác sĩ/Admin/Chủ phòng khám. Sai vai trò 403, thiếu/sai JWT 401.
+  - `GET /results?idChiTietLD=...`: CT + 11 ký tự chữ/số, trả 400 nếu sai mã, 404 nếu không có lượt; kết quả PascalCase (`IdAIKetQua`, `IdChiTietLD`, `LoaiKetQua`, `NoiDung`, `ThoiDiemTao`), mảng rỗng nếu chưa phân tích. Response no-store.
+  - `POST /results`: body `{ IdChiTietLD, LoaiKetQua, NoiDung }`, chỉ nhận TOMTAT/PHANTICH/CANHBAO, nội dung không rỗng tối đa 500.000 ký tự; mã mới qua generateId('AI'), thời điểm lưu theo giờ Việt Nam; lượt đã hủy trả 409. Trả 201 `{ message, aiResult }`.
+  - `POST /analyze`: body `{ idHoSoBenhNhan }` chuẩn HS + 11 ký tự chữ/số. Backend gọi examinationService, không nhận hồ sơ/tiền sử tùy ý từ client. Không có hồ sơ 404; chưa gắn lượt hoặc đã hủy 409. Payload gồm IdChiTietLD, IdHoSoBenhNhan, BenhNhan, SinhHieu, LamSang, tienSuBenh và lichSuKhamTruoc; số NUMERIC từ pg được đổi thành JSON number. Không gửi chẩn đoán hiện tại vào dữ liệu đầu vào AI.
+  - Gọi FastAPI qua HTTP trước khi mở transaction; timeout Backend mặc định 25s (`AI_SERVICE_TIMEOUT_MS`), URL `AI_SERVICE_URL` mặc định localhost:8000, giới hạn response 2MB. Lỗi mạng/timeout/JSON hoặc hợp đồng thiếu/sai ba loại trả 502: "Dịch vụ phân tích AI hiện không khả dụng. Vui lòng thử lại sau." Kết quả cũ được giữ nguyên.
+  - Sau khi nhận hợp đồng hợp lệ, khóa lượt/lịch/hồ sơ/ca, kiểm tra lại trạng thái và snapshot dữ liệu; thay đổi trong lúc phân tích trả 409. Dùng cùng transaction client để đọc lại, tránh cạn Pool do lấy thêm kết nối khi đang giữ khóa. Xóa kết quả AI cũ của chính lượt này và chèn đúng 3 dòng trong cùng BEGIN/COMMIT; lỗi insert rollback khôi phục bộ cũ. Không thay đổi sinh hiệu, chẩn đoán, kết luận hoặc lịch khám.
+  - Trả `{ IdChiTietLD, nhanThamKhao, canhBaoSinhHieu, metadata, results }`. Metadata gồm ruleEngineVersion 1.0, llmUsed, model; results là ba dòng đã lưu PascalCase. Cảnh báo có chiSo/giaTri/mucDo (Lưu ý/Cảnh báo)/moTa. Cảnh báo có cấu trúc và metadata chỉ có trong response phân tích; GET chỉ phục hồi ba nội dung đã lưu, không giả định lại model từ lịch sử.
+  - Schema chuẩn là AIKETQUA.NoiDung TEXT. Môi trường cũ đã phát hiện VARCHAR(255): migration thủ công `backend/migrations/20261120_ai_result_content.sql` mở rộng TEXT giữ nguyên dữ liệu; không được cắt ngắn nội dung y khoa để vừa 255 và không chạy migration từ server/request.
+  - DoctorExam tự nạp kết quả cũ khi chọn bệnh nhân, dùng selectionVersion/aiRequest chống phản hồi của bệnh nhân cũ ghi lên bệnh nhân mới; đóng hồ sơ reset toàn bộ state AI. Nút phân tích khóa khi chưa chọn/đang tải/đang phân tích/lượt hủy. Lỗi amber không chặn lưu chẩn đoán. Hiển thị cảnh báo định lượng và TOMTAT → PHANTICH → CANHBAO, luôn có nhãn tham khảo; cột AI 340px ở 2xl.
+
+### 6.1. Hợp đồng FastAPI nội bộ (`ai-service`, cổng 8000)
+
+- GET `/health` → `{ "status": "ok", "service": "clinic-ai-service" }`.
+- POST `/analyze` nhận JSON PascalCase và hai mảng camelCase: `IdChiTietLD`, `IdHoSoBenhNhan`; `BenhNhan` (TenBenhNhan/GioiTinh/NgaySinh); `SinhHieu` (NhietDo/HuyetApTamThu/HuyetApTamTruong/NhipTim/NhipTho/CanNang/ChieuCao); `LamSang` (LiDoKham/TrieuChung/ThoiDiemKhoiPhat/MucDo/GhiChu); `tienSuBenh` và `lichSuKhamTruoc` theo DTO Backend. Dữ liệu thiếu giữ null/"Chưa ghi nhận", không chuyển số 0 thành null. Pydantic v2 từ chối ID sai, số âm/không hữu hạn, bool giả số nguyên và trường lạ (422). Mỗi mảng tối đa 100 dòng, chuỗi mô tả tối đa 255 theo giới hạn cột DB; request quá hợp đồng trả 422, Backend không ghi kết quả.
+- Rule engine 1.0 là ngưỡng sàng lọc tham khảo theo yêu cầu đồ án ở người lớn, chưa phải quy trình điều trị được xác thực: nhiệt độ <35,5; 37,5–<38; ≥38; huyết áp tâm thu ≥140 HOẶC tâm trương ≥90, hoặc tâm thu <90 HOẶC tâm trương <60; nhịp tim <60/>100; nhịp thở <12/>20; BMI = kg/(cm/100)², lưu ý <18,5 hoặc ≥25. Cần xác minh phép đo và bối cảnh, không chẩn đoán tăng huyết áp từ một lần đo; nhắc bác sĩ đánh giá thuốc tê có chất co mạch, không đưa liều/đơn thuốc. Không tính BMI khi dữ liệu không hợp lệ; luôn cảnh báo giới hạn tuổi/trẻ em/thai kỳ.
+- Cấu hình dotenv: AI_PROVIDER=gemini (hoặc openai/openai-compatible), AI_API_KEY, AI_BASE_URL, AI_MODEL, AI_TIMEOUT_SECONDS (20 mặc định). Gemini generateContent dùng key trong header, responseMimeType application/json; adapter tương thích OpenAI dùng chat/completions. Temperature 0,15; timeout toàn bộ lượt HTTP, không tự retry gây trùng chi phí.
+- Chống bịa dữ liệu: prompt coi dữ liệu là nội dung không tin cậy; không gửi tên/ngày sinh định danh tới LLM. Rule engine tạo các khối nguồn từ dữ liệu thực; LLM chỉ sắp xếp lại nguyên văn các dòng trong từng khối. So sánh đầy đủ các dòng để chặn thêm thuốc/bệnh/xét nghiệm hoặc bỏ cảnh báo; không khớp thì fallback. Vì vậy đây là tổng hợp có kiểm soát, không phải sinh chẩn đoán tự do.
+- Thiếu key, provider lỗi, timeout hoặc parse/grounding không hợp lệ trả HTTP 200 cùng ba khối tổng hợp xác định, cảnh báo định lượng và llmUsed=false/model=null. Luôn có nhãn: "Nội dung do AI tổng hợp chỉ mang tính chất tham khảo hỗ trợ lâm sàng, không thay thế chẩn đoán và quyết định điều trị của bác sĩ."
+- FastAPI không có driver/credentials PostgreSQL; mặc định uvicorn bind localhost. Chỉ Backend có JWT/role guard và truy cập DB. Khi triển khai qua mạng phải giữ AI Service trong mạng nội bộ được kiểm soát. Không log khóa hoặc toàn bộ hồ sơ. Tests chỉ dùng dữ liệu giả lập/mocks, không gọi provider thật.
 
 ---
 

@@ -45,9 +45,9 @@ exports.getClinicalQueue = async ({ date, all, idBacSi }) => {
   return result.rows;
 };
 
-exports.getPatientExamInfo = async id => {
+exports.getPatientExamInfo = async (id, db = pool) => {
   // Một lượt khám dùng một hồ sơ riêng; LATERAL giúp dữ liệu cũ có nhiều liên kết vẫn trả một bản ghi.
-  const result = await pool.query(`SELECT ${selectProfile('h')}, ${identityFields},
+  const result = await db.query(`SELECT ${selectProfile('h')}, ${identityFields},
     visit.IdChiTietLD AS "IdChiTietLD", visit.LiDoKham AS "LiDoKham",
     TO_CHAR(visit.NgayLamViec, 'YYYY-MM-DD') AS "NgayLamViec", visit.GioBatDau AS "GioBatDau",
     visit."TenBacSi" AS "TenBacSi", visit.TrangThai AS "TrangThaiLich", visit."TenPhongKham" AS "TenPhongKham"
@@ -62,13 +62,13 @@ exports.getPatientExamInfo = async id => {
     ) visit ON TRUE WHERE h.IdHoSoBenhNhan = $1`, [id]);
   if (!result.rows.length) return null;
   const [history, past] = await Promise.all([
-    pool.query(`${samePerson} SELECT ts.IdTienSuBenh AS "IdTienSuBenh", ts.IdHoSoBenhNhan AS "IdHoSoBenhNhan",
+    db.query(`${samePerson} SELECT ts.IdTienSuBenh AS "IdTienSuBenh", ts.IdHoSoBenhNhan AS "IdHoSoBenhNhan",
       ts.TenBenh AS "TenBenh", ts.MoTa AS "MoTa", TO_CHAR(ts.ThoiDiemMac, 'YYYY-MM-DD') AS "ThoiDiemMac",
       ts.TrangThai AS "TrangThai", tk.HoTen AS "TenNguoiGhiNhan"
       FROM TIENSUBENH ts JOIN person p ON p.IdHoSoBenhNhan = ts.IdHoSoBenhNhan
       LEFT JOIN TAIKHOAN tk ON tk.IdTaiKhoan = ts.NguoiGhiNhan
       ORDER BY ts.ThoiDiemMac DESC NULLS LAST, ts.IdTienSuBenh`, [id]),
-    pool.query(`${samePerson} SELECT c.IdChiTietLD AS "IdChiTietLD", h.IdHoSoBenhNhan AS "IdHoSoBenhNhan",
+    db.query(`${samePerson} SELECT c.IdChiTietLD AS "IdChiTietLD", h.IdHoSoBenhNhan AS "IdHoSoBenhNhan",
       TO_CHAR(l.NgayLamViec, 'YYYY-MM-DD') AS "NgayLamViec", l.GioBatDau AS "GioBatDau", bs.HoTen AS "TenBacSi",
       c.LiDoKham AS "LiDoKham", h.TrieuChung AS "TrieuChung", h.ChuanDoan AS "ChuanDoan", h.KetLuan AS "KetLuan"
       FROM person p JOIN HOSOBENHNHAN h ON h.IdHoSoBenhNhan = p.IdHoSoBenhNhan

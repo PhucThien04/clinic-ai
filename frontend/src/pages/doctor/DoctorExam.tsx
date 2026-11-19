@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import {ClinicalAIPanel} from '../../components/clinical/ClinicalAIPanel';
 import DashboardLayout from '../../components/DashboardLayout/DashboardLayout';
 import { ClinicalQueuePanel } from '../../components/clinical/ClinicalQueuePanel';
 import { PatientExamSummary } from '../../components/clinical/PatientExamSummary';
@@ -13,7 +13,7 @@ export default function DoctorExam() {
     <div className="mx-auto max-w-[1600px] space-y-6">
       <header><h1 className="text-2xl font-bold text-slate-900">Phòng khám Bác sĩ</h1>
         <p className="mt-2 text-sm text-slate-500">Tra cứu hồ sơ, lưu ý bệnh nền và xem các lần điều trị trước khi kết luận lượt khám hiện tại.</p></header>
-      <div className="grid items-start gap-6 2xl:grid-cols-[320px_minmax(0,1fr)_260px] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid items-start gap-6 2xl:grid-cols-[310px_minmax(0,1fr)_340px] xl:grid-cols-[300px_minmax(0,1fr)]">
         <ClinicalQueuePanel state={exam} selectedId={record?.IdHoSoBenhNhan}
           busy={exam.saving || exam.loadingPatient} onSelect={id => void exam.fetchPatientExam(id)} />
         <div className="min-w-0 space-y-5">
@@ -73,12 +73,8 @@ export default function DoctorExam() {
             </form>
           </> : !exam.loadingPatient && <p className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">Chọn một bệnh nhân từ danh sách lịch khám bên trái để bắt đầu.</p>}
         </div>
-        <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-2 2xl:col-start-auto">
-          <h2 className="flex items-center gap-2 font-bold text-slate-900"><Sparkles size={18} className="text-teal-600" />Phân Tích AI</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-500">Khu vực dành cho tóm tắt tiền sử, phân tích sinh hiệu và cảnh báo hỗ trợ bác sĩ.</p>
-          <button disabled className="mt-4 w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-400">Chưa kích hoạt</button>
-          <p className="mt-3 text-xs leading-5 text-slate-500">AI chỉ hỗ trợ tham khảo, không thay thế quyết định chuyên môn của bác sĩ.</p>
-        </aside>
+        <ClinicalAIPanel selected={!!record} canAnalyze={exam.canSave&&!exam.loadingPatient} results={exam.aiResults} alerts={exam.vitalAlerts}
+          disclaimer={exam.aiDisclaimer} metadata={exam.aiMetadata} loading={exam.loadingAI} analyzing={exam.analyzingAI} error={exam.aiError} onAnalyze={()=>void exam.handleAnalyzeAI()}/>
       </div>
     </div>
   </DashboardLayout>;
