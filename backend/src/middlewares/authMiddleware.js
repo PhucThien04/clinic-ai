@@ -1,5 +1,12 @@
 const jwt = require('jsonwebtoken');
 
+exports.requireRoles = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user?.VaiTro)) {
+    return res.status(403).json({ error: 'Bạn không có quyền thực hiện chức năng này.' });
+  }
+  next();
+};
+
 exports.verifyToken = (req, res, next) => {
   const token = req.header('Authorization');
 
