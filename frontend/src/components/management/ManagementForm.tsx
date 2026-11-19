@@ -1,13 +1,14 @@
 import type {FormEvent,ReactNode} from 'react';
 export interface FormField {name:string;label:string;type?:string;required?:boolean;maxLength?:number;readOnly?:boolean;
-  min?:string;step?:string;pattern?:string;options?:{value:string;label:string}[]}
-export function ManagementForm({title,fields,values,onChange,onSubmit,saving,onCancel,children,hideTitle=false}:{title:string;fields:FormField[];values:object;
-  onChange:(name:string,value:string)=>void;onSubmit:(event:FormEvent)=>void;saving:boolean;onCancel?:()=>void;children?:ReactNode;hideTitle?:boolean}){
+  min?:string;step?:string;pattern?:string;fullWidth?:boolean;options?:{value:string;label:string}[]}
+export function ManagementForm({title,fields,values,onChange,onSubmit,saving,onCancel,children,hideTitle=false,columns=1,submitLabel='Lưu thông tin'}:{title:string;fields:FormField[];values:object;
+  onChange:(name:string,value:string)=>void;onSubmit:(event:FormEvent)=>void;saving:boolean;onCancel?:()=>void;children?:ReactNode;hideTitle?:boolean;columns?:1|2;submitLabel?:string}){
   return <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     {!hideTitle&&<h2 className="mb-4 text-lg font-bold text-slate-900">{title}</h2>}
     {children}
     <form onSubmit={onSubmit}><fieldset disabled={saving} className="space-y-4 disabled:opacity-60">
-      {fields.map(field=><label key={field.name} className="block text-sm font-medium text-slate-700">{field.label}
+      <div className={columns===2?'grid grid-cols-1 gap-5 md:grid-cols-2':'space-y-4'}>
+      {fields.map(field=><label key={field.name} className={`block text-sm font-medium text-slate-700 ${columns===2&&field.fullWidth?'md:col-span-2':''}`}>{field.label}
         {field.options?<select value={String((values as Record<string,unknown>)[field.name]??'')} required={field.required!==false}
           onChange={event=>onChange(field.name,event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2.5">
           {field.options.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select>
@@ -17,8 +18,9 @@ export function ManagementForm({title,fields,values,onChange,onSubmit,saving,onC
           maxLength={field.maxLength??255} readOnly={field.readOnly} min={field.min} step={field.step} pattern={field.pattern}
           onChange={event=>onChange(field.name,event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 p-2.5 read-only:bg-slate-50 focus:border-sky-600"/>}
       </label>)}
+      </div>
       <div className="flex justify-end gap-2">{onCancel&&<button type="button" onClick={onCancel} className="rounded-lg border border-slate-200 px-4 py-2 text-slate-600">Đóng</button>}
-        <button className="rounded-lg bg-teal-600 px-4 py-2 font-semibold text-white hover:bg-teal-700">{saving?'Đang lưu...':'Lưu thông tin'}</button></div>
+        <button className="rounded-lg bg-teal-600 px-4 py-2 font-semibold text-white hover:bg-teal-700">{saving?'Đang lưu...':submitLabel}</button></div>
     </fieldset></form>
   </section>;
 }

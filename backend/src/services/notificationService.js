@@ -48,9 +48,10 @@ exports.getNotifications = async user => {
     }
   }else if(!['Admin','Chủ phòng khám'].includes(role))fail(403,'Bạn không có quyền thực hiện chức năng này.');
   if(role==='Nhân viên'){
-    const rows=(await pool.query(`SELECT IdLichLamViec AS "Id",TO_CHAR(GioBatDau,'HH24:MI') AS "Time",TrangThai AS "Status"
+    const rows=(await pool.query(`SELECT IdLichLamViec AS "Id",TO_CHAR(GioBatDau,'HH24:MI') AS "Time",TrangThai AS "Status",
+      TO_CHAR(NgayLamViec+GioBatDau,'YYYY-MM-DD"T"HH24:MI:SS')||'+07:00' AS "Timestamp"
       FROM LICHLAMVIEC WHERE NgayLamViec=${today} ORDER BY GioBatDau LIMIT 5`)).rows;
-    for(const row of rows)add(`schedule:${row.Id}:${row.Status}`,'Ca làm việc hôm nay',`${row.Time} · ${row.Status}`,'info','schedule','/staff');
+    for(const row of rows)add(`schedule:${row.Id}:${row.Status}`,'Ca làm việc hôm nay',`${row.Time} · ${row.Status}`,'info','schedule','/staff',row.Timestamp);
   }
   if(role==='Admin'){
     const rows=(await pool.query(`SELECT IdTaiKhoan AS "Id",HoTen AS "Name",VaiTro AS "Role",TrangThai AS "Status"

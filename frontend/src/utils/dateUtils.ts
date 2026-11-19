@@ -10,6 +10,14 @@ export const formatDate = (dateStr?: string) => {
 export const getClinicTimestamp = (date: string, time: string) =>
   Date.parse(`${date}T${time}+07:00`);
 
+export const formatNotificationDateTime = (timestamp: string) => {
+  const date=new Date(timestamp);
+  if(!Number.isFinite(date.getTime()))return '';
+  const parts=new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);
+  const value=(type:string)=>parts.find(part=>part.type===type)?.value||'';
+  return `${value('day')}/${value('month')}/${value('year')} · ${value('hour')}:${value('minute')}`;
+};
+
 export const formatDateTime = (dateStr?: string) => {
   if (!dateStr) return "";
   try {

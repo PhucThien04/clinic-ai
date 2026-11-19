@@ -23,9 +23,11 @@ export default function DashboardLayout({children}:{children:ReactNode}){
         })}
       </nav>
       <div className="shrink-0 border-t border-slate-200 bg-white p-5">
-        <div className="mb-3"><NotificationBell placement="sidebar"/></div>
-        <Link to="/profile" className="mb-4 flex items-center gap-2.5 no-underline"><Users size={22} className="shrink-0 text-sky-600"/>
+        <div className="relative mb-3 flex items-center justify-between gap-2">
+        <Link to="/profile" className="flex min-w-0 flex-1 items-center gap-2.5 no-underline"><Users size={22} className="shrink-0 text-sky-600"/>
           <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{user.HoTen}</p><p className="text-xs text-slate-500">Xem hồ sơ cá nhân</p></div></Link>
+        <NotificationBell placement="sidebar"/>
+        </div>
         <button type="button" onClick={()=>{authService.logout();navigate('/login');}} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-50 p-2.5 text-sm font-semibold text-red-500"><LogOut size={16}/>Đăng xuất</button>
       </div>
     </aside>

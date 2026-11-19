@@ -12,10 +12,11 @@ export default function ClinicManagement(){
     <header className="flex flex-wrap justify-between gap-3"><div><h1 className="text-2xl font-bold text-slate-900">Quản lý phòng khám</h1><p className="mt-1 text-sm text-slate-500">Cập nhật thông tin phòng khám, danh mục dịch vụ và chương trình ưu đãi.</p></div><IconButton label="Tải lại" icon={RefreshCw} spinning={owner.loading} disabled={owner.loading||owner.saving} onClick={()=>void owner.load()}/></header>
     <ManagementTabs value={owner.tab} onChange={owner.switchTab} disabled={owner.saving} tabs={[{value:'info',label:'Thông tin phòng khám'},{value:'services',label:'Danh mục dịch vụ'},{value:'events',label:'Sự kiện & Ưu đãi'}]}/>
     <ManagementMessages error={owner.error} message={owner.message} loading={owner.loading}/>
-    {owner.tab==='info'?<div className="max-w-2xl"><ManagementForm title="Thông tin phòng khám hiện tại" values={owner.info} onChange={owner.changeInfo} onSubmit={owner.saveInfo} saving={owner.saving||owner.loading} fields={[
-      {name:'TenPhongKham',label:'Tên phòng khám'},{name:'DiaChi',label:'Địa chỉ'},{name:'SoDienThoai',label:'Số điện thoại (10 chữ số)',type:'tel',maxLength:10,pattern:'[0-9]{10}'},
-      {name:'Email',label:'Email',type:'email',maxLength:100},{name:'GioiThieu',label:'Giới thiệu',type:'textarea',required:false},
+    {owner.tab==='info'?<div className="w-full"><ManagementForm columns={2} submitLabel="Lưu thông tin phòng khám" title="Thông tin phòng khám hiện tại" values={owner.info} onChange={owner.changeInfo} onSubmit={owner.saveInfo} saving={owner.saving||owner.loading} fields={[
+      {name:'TenPhongKham',label:'Tên phòng khám'},{name:'SoDienThoai',label:'Số điện thoại (10 chữ số)',type:'tel',maxLength:10,pattern:'[0-9]{10}'},
+      {name:'Email',label:'Email',type:'email',maxLength:100},{name:'DiaChi',label:'Địa chỉ'},
       {name:'GioMoCua',label:'Giờ mở cửa',type:'time',required:false},{name:'GioDongCua',label:'Giờ đóng cửa',type:'time',required:false},
+      {name:'GioiThieu',label:'Giới thiệu',type:'textarea',required:false,fullWidth:true},
     ]}/></div>:<div>
       <section className="rounded-xl border border-slate-200 bg-white p-5"><div className="mb-4 flex justify-between"><h2 className="font-bold text-slate-900">{owner.tab==='services'?'Danh mục dịch vụ':'Sự kiện & Ưu đãi'}</h2>
         <IconButton label={owner.tab==='services'?'Thêm dịch vụ':'Thêm sự kiện'} icon={Plus} tone="primary" disabled={owner.saving||owner.loading} onClick={()=>owner.tab==='services'?owner.openService():owner.openEvent()}/></div>
