@@ -11,11 +11,12 @@ export function useModalDialog(onClose:()=>void,busy:boolean){
     const overflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     const dialog=dialogRef.current;
-    (dialog?.querySelector<HTMLElement>('input:not([readonly]), select, textarea')||dialog)?.focus();
+    const focusable=()=>Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex="0"]')||[]).filter(control=>control.getClientRects().length>0);
+    (focusable().find(control=>control.matches('input:not([readonly]),select,textarea'))||focusable()[0]||dialog)?.focus();
     const handleKey=(event:KeyboardEvent)=>{
       if(event.key==='Escape'){event.preventDefault();if(!latest.current.busy)latest.current.onClose();}
       if(event.key!=='Tab'||!dialog)return;
-      const controls=Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex="0"]'));
+      const controls=focusable();
       if(!controls.length){event.preventDefault();dialog.focus();return;}
       const first=controls[0],last=controls[controls.length-1];
       if(event.shiftKey&&(document.activeElement===first||document.activeElement===dialog)){event.preventDefault();last.focus();}

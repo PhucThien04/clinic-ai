@@ -1,11 +1,11 @@
 import type React from "react";
 import {useProfile} from "../../hooks/useProfile";
-import {ImageUploadField} from "../../components/management/ImageUploadField";
+import {AvatarManagerModal} from "../../components/management/AvatarManagerModal";
 import {UserAvatar} from "../../components/management/MediaImage";
 import DashboardLayout from "../../components/DashboardLayout/DashboardLayout";
-import {Save, AlertCircle, CheckCircle2} from "lucide-react";
+import {Save, AlertCircle, CheckCircle2,Camera} from "lucide-react";
 export default function Profile(): React.JSX.Element {
-  const {profile,loading,saving,status,handleChange,handleSubmit,changeImage,setUploadingMedia}=useProfile();
+  const {profile,loading,saving,status,handleChange,handleSubmit,avatarOpen,setAvatarOpen,avatarSaved}=useProfile();
   return (
     <DashboardLayout>
       <div  className="max-w-175! mx-auto! my-0!">
@@ -27,11 +27,10 @@ export default function Profile(): React.JSX.Element {
             <div
                className="flex! items-center! gap-4! mb-[30px]! [border-bottom:1px_solid_#e2e8f0]! pb-5!"
             >
-              <div
-                 className="w-16! h-16! bg-sky-100! rounded-full! flex! items-center! justify-center!"
-              >
+              <button type="button" disabled={saving} title="Chỉnh sửa ảnh đại diện" aria-label="Chỉnh sửa ảnh đại diện" onClick={()=>setAvatarOpen(true)} className="group relative shrink-0 rounded-full focus:ring-2 focus:ring-sky-600">
                 <UserAvatar src={profile.AnhDaiDien} name={profile.HoTen} className="h-16 w-16"/>
-              </div>
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-900/50 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"><Camera size={22}/></span>
+              </button>
               <div>
                 <h2  className="text-[20px]! text-slate-900! m-0!">
                   {profile.HoTen}
@@ -63,7 +62,6 @@ export default function Profile(): React.JSX.Element {
               onSubmit={handleSubmit}
                className="flex! flex-col! gap-5!"
             >
-              <ImageUploadField folder="avatars" label="Ảnh đại diện" value={profile.AnhDaiDien} onChange={changeImage} disabled={saving} onBusyChange={setUploadingMedia}/>
               <div
                  className="grid! grid-cols-[1fr_1fr]! gap-5!"
               >
@@ -226,6 +224,7 @@ export default function Profile(): React.JSX.Element {
           </div>
         )}
       </div>
+      {profile&&avatarOpen&&<AvatarManagerModal currentUrl={profile.AnhDaiDien} onSaved={avatarSaved} onClose={()=>setAvatarOpen(false)}/>}
     </DashboardLayout>
   );
 }

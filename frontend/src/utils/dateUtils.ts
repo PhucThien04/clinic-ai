@@ -15,7 +15,16 @@ export const formatNotificationDateTime = (timestamp: string) => {
   if(!Number.isFinite(date.getTime()))return '';
   const parts=new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);
   const value=(type:string)=>parts.find(part=>part.type===type)?.value||'';
-  return `${value('day')}/${value('month')}/${value('year')} · ${value('hour')}:${value('minute')}`;
+  return `${value('hour')}:${value('minute')} · ${value('day')}/${value('month')}/${value('year')}`;
+};
+
+export const formatRelativeTime=(isoString:string,now:number=Date.now())=>{
+  const timestamp=Date.parse(isoString);if(!Number.isFinite(timestamp))return '';
+  const elapsed=Math.max(0,now-timestamp);const minutes=Math.floor(elapsed/60000);
+  const day=(value:number)=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(value);
+  const relative=minutes<1?'Vừa xong':minutes<60?`${minutes} phút trước`:
+    day(timestamp)===day(now-86400000)?'Hôm qua':elapsed<86400000?`${Math.floor(elapsed/3600000)} giờ trước`:`${Math.floor(elapsed/86400000)} ngày trước`;
+  return `${relative} · ${formatNotificationDateTime(isoString)}`;
 };
 
 export const formatDateTime = (dateStr?: string) => {

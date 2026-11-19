@@ -104,7 +104,7 @@ exports.saveExam = async (id, fields, diagnosis) => {
     const values = Object.values(fields);
     // fields đã được Controller giới hạn theo danh sách cố định.
     const setters = names.map((name, i) => `${name} = $${i + 1}`);
-    if (diagnosis) setters.push('ThoiDiemCapNhat = NOW()');
+    setters.push("ThoiDiemCapNhat = NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh'");
     values.push(id);
     const updated = await client.query(`UPDATE HOSOBENHNHAN SET ${setters.join(', ')}
       WHERE IdHoSoBenhNhan = $${values.length} RETURNING ${selectProfile('HOSOBENHNHAN')}`, values);

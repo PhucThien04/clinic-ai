@@ -1,4 +1,5 @@
 import {UserAvatar} from '../management/MediaImage';
+import {useCurrentUser} from '../../hooks/useCurrentUser';
 import type {ReactNode} from 'react';
 import {Link,Navigate,useNavigate,useLocation} from 'react-router-dom';
 import {Activity,LogOut,Home,Users,Calendar,FileText,HeartPulse,Stethoscope,Building2} from 'lucide-react';
@@ -8,7 +9,7 @@ import {NotificationBell} from '../notifications/NotificationBell';
 
 const icons={calendar:Calendar,file:FileText,users:Users,clinic:Building2,nurse:HeartPulse,doctor:Stethoscope};
 export default function DashboardLayout({children}:{children:ReactNode}){
-  const navigate=useNavigate();const location=useLocation();const user=authService.getCurrentUser();
+  const navigate=useNavigate();const location=useLocation();const user=useCurrentUser();
   if(!user)return <Navigate to="/login" replace/>;
   const navigation=getActorNavigation(user.VaiTro);
   return <div className="flex min-h-screen bg-slate-50">

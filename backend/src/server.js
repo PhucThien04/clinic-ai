@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const pool = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
@@ -38,6 +37,7 @@ app.get('/', (req, res) => {
 });
 
 // Khởi động server
-require('./utils/ensureMediaColumns').ensureMediaColumns(pool).then(()=>{
+const pool=require('./config/db');
+require('./services/notificationSchemaService').ensureNotificationTimestamps(pool).then(()=>{
   app.listen(PORT, () => console.log(`Server đang chạy trên cổng ${PORT}`));
-}).catch(()=>{console.error('Không thể bổ sung cột ảnh. Kiểm tra kết nối và quyền ALTER TABLE của tài khoản DB.');process.exitCode=1;pool.end();});
+}).catch(()=>{console.error('Không thể khởi tạo timestamp thông báo. Kiểm tra schema và quyền ALTER TABLE/TRIGGER.');process.exitCode=1;pool.end();});

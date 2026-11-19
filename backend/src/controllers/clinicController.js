@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const {generateId}=require('../utils/idGenerator');
 const {handle,transaction,columns,text,choice,time,date,fail}=require('../utils/managementUtils');
 const {mediaUrl}=require('../utils/mediaUrl');
+const {removeStoredImage}=require('../services/cloudinaryService');
 const clinicColumns=columns(['IdPhongKham','ChuPhongKham','TenPhongKham','DiaChi','SoDienThoai','Email','GioiThieu','GioMoCua','GioDongCua']);
 const serviceColumns=columns(['IdDichVu','IdPhongKham','TenDichVu','MoTa','Gia','TrangThai','HinhAnh']);
 const eventColumns=columns(['IdSuKien','IdPhongKham','TieuDe','NoiDung','TrangThai','HinhAnh'])+
@@ -60,6 +61,7 @@ async function saveService(req,update){
     const result=await client.query(update
       ?`UPDATE DICHVU SET IdPhongKham=$1,TenDichVu=$2,MoTa=$3,Gia=$4,TrangThai=$5,HinhAnh=$7 WHERE IdDichVu=$6 RETURNING ${serviceColumns}`
       :`INSERT INTO DICHVU (IdPhongKham,TenDichVu,MoTa,Gia,TrangThai,IdDichVu,HinhAnh) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING ${serviceColumns}`,values);
+    if(update&&old.HinhAnh!==result.rows[0].HinhAnh)await removeStoredImage(old.HinhAnh,req.user,'services');
     return result.rows[0];
   });
 }
@@ -76,6 +78,7 @@ async function saveEvent(req,update){
     const result=await client.query(update
       ?`UPDATE SUKIEN SET IdPhongKham=$1,TieuDe=$2,NoiDung=$3,TrangThai=$4,ThoiGianBatDau=$5,ThoiGianKetThuc=$6,HinhAnh=$8 WHERE IdSuKien=$7 RETURNING ${eventColumns}`
       :`INSERT INTO SUKIEN (IdPhongKham,TieuDe,NoiDung,TrangThai,ThoiGianBatDau,ThoiGianKetThuc,IdSuKien,HinhAnh) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING ${eventColumns}`,values);
+    if(update&&old.HinhAnh!==result.rows[0].HinhAnh)await removeStoredImage(old.HinhAnh,req.user,'events');
     return result.rows[0];
   });
 }
@@ -85,9 +88,10 @@ exports.createEvent=handle(async(req,res)=>res.status(201).json({message:'Đã t
 exports.updateEvent=handle(async(req,res)=>res.json({message:'Đã cập nhật sự kiện.',suKien:await saveEvent(req,true)}));
 const deleteItem=(table,idColumn,label,alternative)=>handle(async(req,res)=>{
   try{await transaction(async client=>{
-    const row=await client.query(`SELECT ${idColumn} FROM ${table} WHERE ${idColumn}=$1 FOR UPDATE`,[req.params.id]);
+    const row=await client.query(`SELECT HinhAnh AS "HinhAnh" FROM ${table} WHERE ${idColumn}=$1 FOR UPDATE`,[req.params.id]);
     if(!row.rows.length)fail(404,`Không tìm thấy ${label}.`);
     await client.query(`DELETE FROM ${table} WHERE ${idColumn}=$1`,[req.params.id]);
+    await removeStoredImage(row.rows[0].HinhAnh,req.user,table==='DICHVU'?'services':'events');
   });}catch(error){if(error.code==='23503')fail(409,`Không thể xóa ${label} có dữ liệu liên quan. Vui lòng chuyển sang ${alternative}.`);throw error;}
   res.json({message:`Đã xóa ${label}.`});
 });

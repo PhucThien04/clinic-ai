@@ -127,6 +127,7 @@ exports.updateAppointment = (req, res) => transaction(res, async client => {
   await validateSchedule(client, targetSchedule, req.params.id, sixHours);
   await client.query(`UPDATE CHITIETLICHDAT SET IdLichLamViec = $1, LiDoKham = $2, GhiChu = $3
     WHERE IdChiTietLD = $4`, [targetSchedule, LiDoKham ?? appointment.LiDoKham, GhiChu ?? appointment.GhiChu, req.params.id]);
+  await client.query("UPDATE LICHDAT SET ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat=$1",[appointment.IdLichDat]);
   return { body: { message: 'Cập nhật lịch khám thành công!' } };
 });
 

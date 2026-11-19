@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useState} from 'react';
+import {useSearchParams} from 'react-router-dom';
 import type {FormEvent} from 'react';
 import {clinicManageService} from '../services/clinicManageService';
 import type {ClinicService,ClinicEvent,ClinicPayload,ServicePayload,EventPayload} from '../services/clinicManageService';
@@ -8,7 +9,9 @@ const emptyInfo:ClinicPayload={TenPhongKham:'',DiaChi:'',SoDienThoai:'',Email:''
 const emptyService:ServicePayload={HinhAnh:'',TenDichVu:'',MoTa:'',Gia:'0',TrangThai:'Hiển thị'};
 const emptyEvent:EventPayload={HinhAnh:'',TieuDe:'',NoiDung:'',TrangThai:'Hiển thị',ThoiGianBatDau:'',ThoiGianKetThuc:''};
 export function useClinicManagement(){
-  const [uploadingMedia,setUploadingMedia]=useState(false);const action=useManagementAction();const [tab,setTab]=useState('info');const [loading,setLoading]=useState(false);
+  const [searchParams,setSearchParams]=useSearchParams();
+  const requestedTab=searchParams.get('tab');const tab=requestedTab==='services'||requestedTab==='events'?requestedTab:'info';
+  const [uploadingMedia,setUploadingMedia]=useState(false);const action=useManagementAction();const [loading,setLoading]=useState(false);
   const [info,setInfo]=useState(emptyInfo);const [services,setServices]=useState<ClinicService[]>([]);const [events,setEvents]=useState<ClinicEvent[]>([]);
   const [serviceForm,setServiceForm]=useState(emptyService);const [eventForm,setEventForm]=useState(emptyEvent);
   const [editingId,setEditingId]=useState<string|null>(null);const [formOpen,setFormOpen]=useState(false);
@@ -34,6 +37,7 @@ export function useClinicManagement(){
     if(!window.confirm('Xóa sự kiện này?'))return;
     if(await action.runAction(()=>clinicManageService.deleteEvent(id),'Đã xóa sự kiện.'))await load();
   };
-  const switchTab=(tab:string)=>{setTab(tab);setFormOpen(false);setEditingId(null);action.setError('');action.setMessage('');};
+  useEffect(()=>{setFormOpen(false);setEditingId(null);action.setError('');action.setMessage('');},[tab,action.setError,action.setMessage]);
+  const switchTab=(tab:string)=>{const params=new URLSearchParams(searchParams);if(tab==='info')params.delete('tab');else params.set('tab',tab);setSearchParams(params);};
   return {...action,uploadingMedia,setUploadingMedia,deleteService,deleteEvent,tab,switchTab,loading,info,services,events,serviceForm,eventForm,editingId,formOpen,setFormOpen,changeInfo,changeService,changeEvent,openService,openEvent,saveInfo,saveService,saveEvent,load};
 }

@@ -1,3 +1,4 @@
+import {PublicEventCard} from '../../components/management/PublicEventCard';
 import {MediaImage} from '../../components/management/MediaImage';
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -131,24 +132,7 @@ export default function Home(): React.JSX.Element {
                 start && end ? `Từ ${start} đến ${end}` : "Đang diễn ra";
 
               return (
-                <div key={ev.IdSuKien || index} className="[background:linear-gradient(90deg,_#f0f9ff_0%,_#ffffff_100%)] [border-left:6px_solid_#0284c7] [padding:20px_24px] rounded-[12px] flex justify-between items-center gap-5 [box-shadow:0_2px_4px_rgba(0,_0,_0,_0.04)] [transition:all_0.2s_ease] [&:hover]:[box-shadow:0_5px_12px_rgba(2,_132,_199,_0.1)] [&:hover]:[transform:translateY(-2px)] max-[900.01px]:items-start max-[640.01px]:flex-col max-[640.01px]:items-stretch max-[640.01px]:p-[18px]">
-                  <div>
-                    {ev.HinhAnh&&<MediaImage src={ev.HinhAnh} alt={ev.TieuDe} className="mb-3 h-36 w-full rounded-lg"/>}
-                    <span className="inline-flex items-center gap-[6px] bg-sky-600 text-white text-[12px] font-bold [padding:4px_12px] rounded-[20px] mb-2">
-                      <Clock size={12} /> {timeDisplay}
-                    </span>
-                    <h3 className="text-[18px] text-sky-700 [margin:4px_0_6px] leading-[1.3]!">{ev.TieuDe}</h3>
-                    <p className="text-slate-600 text-[14px] leading-[1.5] m-0">{ev.NoiDung}</p>
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleNavigation(`Tham gia sự kiện: ${ev.TieuDe}`)
-                    }
-                    className="[padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700 [white-space:nowrap] cursor-pointer bg-sky-600 text-white [border:none] [padding:10px_16px] rounded-[6px] font-semibold [transition:all_0.2s_ease] [&:hover]:bg-sky-700 max-[640.01px]:w-full"
-                  >
-                    Nhận ưu đãi ngay
-                  </button>
-                </div>
+                <PublicEventCard key={ev.IdSuKien || index} event={ev} timeLabel={timeDisplay} actionLabel="Nhận ưu đãi ngay" onAction={()=>handleNavigation(`Tham gia sự kiện: ${ev.TieuDe}`)}/>
               );
             })}
           </div>

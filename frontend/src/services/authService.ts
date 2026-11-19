@@ -21,7 +21,7 @@ export interface RegisterData {
 export const authService = {
   updateCurrentUser: (data: Record<string,unknown>|object) => {
     const current=authService.getCurrentUser();
-    if(current)sessionStorage.setItem('user',JSON.stringify({...current,...data}));
+    if(current){sessionStorage.setItem('user',JSON.stringify({...current,...data}));window.dispatchEvent(new Event('auth-user-updated'));}
   },
   register: async (data: RegisterData) => {
     const response = await API.post('/auth/register', data);
@@ -33,6 +33,7 @@ export const authService = {
     if (response.data.token) {
       sessionStorage.setItem('token', response.data.token);
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      window.dispatchEvent(new Event('auth-user-updated'));
     }
     return response.data;
   },
@@ -40,6 +41,7 @@ export const authService = {
   logout: () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
+    window.dispatchEvent(new Event('auth-user-updated'));
   },
 
   getCurrentUser: () => {

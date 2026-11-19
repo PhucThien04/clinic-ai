@@ -1,7 +1,9 @@
 const router=require('express').Router();
 const multer=require('multer');
 const {verifyToken}=require('../middlewares/authMiddleware');
-const {uploadImage}=require('../controllers/uploadController');
+const {uploadImage,listAvatars,deleteImage}=require('../controllers/uploadController');
+router.get('/avatars',verifyToken,listAvatars);
+router.delete('/',verifyToken,deleteImage);
 const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024,files:1,fields:1},fileFilter:(req,file,cb)=>{
   if(!['image/jpeg','image/png','image/webp','image/gif'].includes(file.mimetype))return cb(Object.assign(new Error('Chỉ chấp nhận ảnh JPEG, PNG, WebP hoặc GIF.'),{status:400}));
   cb(null,true);
