@@ -19,6 +19,10 @@ export interface RegisterData {
 }
 
 export const authService = {
+  updateCurrentUser: (data: Record<string,unknown>|object) => {
+    const current=authService.getCurrentUser();
+    if(current)sessionStorage.setItem('user',JSON.stringify({...current,...data}));
+  },
   register: async (data: RegisterData) => {
     const response = await API.post('/auth/register', data);
     return response.data;

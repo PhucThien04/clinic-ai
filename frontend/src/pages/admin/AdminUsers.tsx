@@ -3,6 +3,8 @@ import DashboardLayout from '../../components/DashboardLayout/DashboardLayout';
 import {ManagementForm,ManagementMessages} from '../../components/management/ManagementForm';
 import {ManagementModal} from '../../components/management/ManagementModal';
 import {IconButton} from '../../components/management/IconButton';
+import {ImageUploadField} from '../../components/management/ImageUploadField';
+import {UserAvatar} from '../../components/management/MediaImage';
 import {useAdminUsers} from '../../hooks/useAdminUsers';
 import {options,userRoles} from '../../utils/managementConfig';
 
@@ -24,7 +26,7 @@ export default function AdminUsers(){
     <section className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-4">
       <table className="w-full text-left text-sm"><thead className="border-b border-slate-200 text-slate-500"><tr><th className="p-3">Người dùng</th><th className="p-3">Liên hệ</th><th className="p-3">Vai trò / Trạng thái</th><th className="p-3">Thao tác</th></tr></thead>
         <tbody>{admin.filteredUsers.map(user=><tr key={user.IdTaiKhoan} className="border-b border-slate-100 align-top">
-          <td className="p-3"><strong>{user.HoTen}</strong><p className="mt-1 text-xs text-slate-500">{user.TenTaiKhoan} · {user.IdTaiKhoan}</p></td>
+          <td className="p-3"><div className="flex items-center gap-3"><UserAvatar src={user.AnhDaiDien} name={user.HoTen}/><div><strong>{user.HoTen}</strong><p className="mt-1 text-xs text-slate-500">{user.TenTaiKhoan} · {user.IdTaiKhoan}</p></div></div></td>
           <td className="p-3">{user.SoDienThoai}<p className="mt-1 text-xs text-slate-500">{user.Email||'Chưa có email'}</p></td>
           <td className="p-3">{user.VaiTro}<p className={`mt-1 text-xs font-semibold ${user.TrangThai==='Khóa'?'text-amber-800':'text-teal-700'}`}>{user.TrangThai}</p></td>
           <td className="p-3"><div className="flex gap-2">
@@ -35,8 +37,9 @@ export default function AdminUsers(){
       </table>
       {!admin.filteredUsers.length&&!admin.loading&&<p className="p-8 text-center text-slate-500">Không có tài khoản phù hợp.</p>}
     </section>
-    {admin.formOpen&&<ManagementModal title={admin.editingId?'Cập nhật tài khoản':'Tạo tài khoản mới'} busy={admin.saving} onClose={()=>admin.setFormOpen(false)}>
-      <ManagementForm hideTitle title="Thông tin tài khoản" values={admin.form} onChange={admin.changeForm} onSubmit={admin.saveUser} saving={admin.saving} onCancel={()=>admin.setFormOpen(false)} fields={[
+    {admin.formOpen&&<ManagementModal title={admin.editingId?'Cập nhật tài khoản':'Tạo tài khoản mới'} busy={admin.saving||admin.uploadingMedia} onClose={()=>admin.setFormOpen(false)}>
+      <ImageUploadField folder="avatars" label="Ảnh đại diện" value={admin.form.AnhDaiDien} onChange={value=>admin.changeForm('AnhDaiDien',value)} disabled={admin.saving} onBusyChange={admin.setUploadingMedia}/>
+      <ManagementForm hideTitle title="Thông tin tài khoản" values={admin.form} onChange={admin.changeForm} onSubmit={admin.saveUser} saving={admin.saving||admin.uploadingMedia} onCancel={()=>admin.setFormOpen(false)} fields={[
         {name:'TenTaiKhoan',label:'Tên đăng nhập',readOnly:!!admin.editingId,maxLength:100},
         {name:'MatKhau',label:admin.editingId?'Mật khẩu mới (trống để giữ nguyên)':'Mật khẩu',type:'password',required:!admin.editingId,maxLength:72},
         {name:'HoTen',label:'Họ và tên'},{name:'CCCD',label:'CCCD (12 chữ số)',readOnly:!!admin.editingId,maxLength:12,pattern:'[0-9]{12}'},

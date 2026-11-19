@@ -103,7 +103,7 @@ exports.login = async (req, res) => {
         MatKhau AS "MatKhau", 
         HoTen AS "HoTen", 
         VaiTro AS "VaiTro", 
-        Email AS "Email", TrangThai AS "TrangThai"
+        Email AS "Email", TrangThai AS "TrangThai", AnhDaiDien AS "AnhDaiDien"
       FROM TAIKHOAN 
       WHERE TenTaiKhoan = $1`, 
       [TenTaiKhoan]
@@ -153,7 +153,8 @@ exports.login = async (req, res) => {
         TenTaiKhoan: user.TenTaiKhoan,
         HoTen: user.HoTen,
         VaiTro: user.VaiTro,
-        Email: user.Email
+        Email: user.Email,
+        AnhDaiDien: user.AnhDaiDien
       }
     });
 

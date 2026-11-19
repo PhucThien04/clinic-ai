@@ -70,7 +70,7 @@ exports.getNotifications = async user => {
     const services=(await pool.query('SELECT IdDichVu AS "Id",TenDichVu AS "Name",TrangThai AS "Status" FROM DICHVU ORDER BY IdDichVu DESC LIMIT 5')).rows;
     for(const row of services)add(`service:${row.Id}:${row.Status}`,'Danh mục dịch vụ',`${row.Name} · ${row.Status}`,'info','service','/owner/clinic');
   }
-  if(['Bệnh nhân','Admin','Chủ phòng khám'].includes(role)){
+  if(['Bệnh nhân','Chủ phòng khám'].includes(role)){
     const events=(await pool.query(`SELECT IdSuKien AS "Id",TieuDe AS "Title",TO_CHAR(ThoiGianBatDau,'YYYY-MM-DD"T"HH24:MI:SS')||'+07:00' AS "Timestamp"
       FROM SUKIEN WHERE TrangThai='Hiển thị' ORDER BY IdSuKien DESC LIMIT 5`)).rows;
     for(const row of events)add(`event:${row.Id}`,row.Title,'Xem thông tin sự kiện và ưu đãi của phòng khám.','info','event',role==='Chủ phòng khám'?'/owner/clinic':'/su-kien',row.Timestamp);

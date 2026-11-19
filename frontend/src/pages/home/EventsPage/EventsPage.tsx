@@ -1,3 +1,4 @@
+import {MediaImage} from '../../../components/management/MediaImage';
 import React from "react";
 import { useClinic } from "../../../hooks/useClinic";
 import { Tag, Clock, ArrowRight } from "lucide-react";
@@ -46,7 +47,7 @@ export default function EventsPage(): React.JSX.Element {
 
             return (
               <div key={ev.IdSuKien || index} className="[background:linear-gradient(90deg,_#f0f9ff_0%,_#ffffff_100%)] [border-left:6px_solid_#0284c7] p-6 flex justify-between items-center flex-wrap gap-4 rounded-[12px] [border:1px_solid_#e2e8f0]">
-                <div className="max-w-200">
+                <div className="max-w-200">{ev.HinhAnh&&<MediaImage src={ev.HinhAnh} alt={ev.TieuDe} className="mb-4 h-44 w-full rounded-lg"/>}
                   <div className="flex items-center gap-[10px] mb-2">
                     <span className="bg-sky-600 text-white text-[12px] font-bold [padding:4px_12px] rounded-[20px] inline-flex items-center gap-[6px]">
                       <Clock size={12} /> {timeDisplay}

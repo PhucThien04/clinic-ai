@@ -30,6 +30,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // Route kiểm tra server hoạt động
 app.get('/', (req, res) => {
@@ -37,6 +38,6 @@ app.get('/', (req, res) => {
 });
 
 // Khởi động server
-app.listen(PORT, () => {
-  console.log(`Server đang chạy trên cổng ${PORT}`);
-});
+require('./utils/ensureMediaColumns').ensureMediaColumns(pool).then(()=>{
+  app.listen(PORT, () => console.log(`Server đang chạy trên cổng ${PORT}`));
+}).catch(()=>{console.error('Không thể bổ sung cột ảnh. Kiểm tra kết nối và quyền ALTER TABLE của tài khoản DB.');process.exitCode=1;pool.end();});

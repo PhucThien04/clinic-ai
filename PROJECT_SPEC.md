@@ -1,6 +1,6 @@
 # Clinic AI — Đặc tả Kỹ thuật & Nghiệp vụ Dự án (Single Source of Truth)
 
-**Phiên bản:** 2.4 (Thông báo theo vai trò và tinh chỉnh UX quản lý)
+**Phiên bản:** 2.5 (Cloudinary, ảnh tài khoản/danh mục và tab lịch hẹn)
 
 **Cập nhật:** 19/11/2026
 
@@ -170,7 +170,7 @@ Không có `.ai-workflow/`, `database/` hoặc `docs/` trong workspace. `ai-serv
 
 1. Chuẩn bị Node.js **22.14+**, npm và Docker Desktop với Linux containers. Vite đang cài đặt chấp nhận Node.js `^20.19.0 || >=22.12.0`; mốc 22.14+ cũng đáp ứng utility test. Python chỉ cần khi bắt đầu triển khai FastAPI.
 2. Kiểm tra container PostgreSQL bằng `docker ps -a`; nếu container `datn` đã có nhưng dừng, dùng `docker start datn`. Kiểm tra sẵn sàng bằng `docker exec datn pg_isready -U postgres -d clinic_duc_tin`. Hướng dẫn tạo container PostgreSQL 15 mới và volume riêng nằm trong [README, mục 4.1](./README.md#41-postgresql-qua-docker).
-3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo hiện chưa có SQL bootstrap, migration hoặc seed. Giữ schema đang có trên môi trường hiện tại; với môi trường mới, nhập SQL schema/dump đã chuẩn bị theo mục 5 bên dưới bằng `psql` trong container. Không hướng dẫn chạy script từ thư mục `database/` không tồn tại.
+3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo chưa có SQL bootstrap/seed hoặc bộ migration tổng quát. Giữ schema đang có; với môi trường mới, nhập SQL schema/dump theo mục 5 bằng `psql` trong container. Helper `backend/src/utils/ensureMediaColumns.js` chỉ bổ sung ba cột ảnh nullable bằng `ADD COLUMN IF NOT EXISTS`, không tạo bảng; Backend chờ helper hoàn tất trước khi listen, cần quyền ALTER TABLE. Integration test gọi helper trên schema riêng. Không hướng dẫn chạy script từ thư mục `database/` không tồn tại.
 4. Nếu chưa có `backend/.env`, sao chép `backend/.env.example` vào đó rồi điền `PORT`, `DB_USER`, `DB_HOST`, `DB_NAME`, `DB_PASSWORD`, `DB_PORT`, `JWT_SECRET`. Mặc định database `clinic_duc_tin`; mật khẩu phải khớp cấu hình PostgreSQL. Chạy Backend từ `backend/` để dotenv đọc đúng tệp. Nếu sau này Backend chạy trong Docker, dùng tên dịch vụ/container DB trên cùng network làm `DB_HOST`.
 5. Tại `backend/`, chạy `npm ci` rồi `npm run dev` (Express `http://localhost:5000`). Tại terminal khác trong `frontend/`, chạy `npm ci` rồi `npm run dev` (Vite thường `http://localhost:5173`). Axios hiện dùng `http://localhost:5000/api`.
 6. Chưa có lệnh khởi động AI Service có thể thực thi trong repo. Chỉ thêm hướng dẫn pip/uvicorn sau khi có dependency và entry point FastAPI thật. Trên PowerShell chặn `npm.ps1`, dùng `npm.cmd`.
@@ -217,6 +217,7 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 | | `DiaChi` | `VARCHAR(255)` | `NULL` | Địa chỉ |
 | | `TrangThai` | `VARCHAR(50)` | `NOT NULL` | Trạng thái (`Hoạt động`, `Khóa`) |
 | | `VaiTro` | `VARCHAR(100)` | `NOT NULL` | `Bệnh nhân`, `Nhân viên`, `Y tá`, `Bác sĩ`, `Admin`, `Chủ phòng khám` |
+| | `AnhDaiDien` | `VARCHAR(500)` | `NULL` | URL ảnh đại diện http/https; null khi chưa có/xóa ảnh |
 | **PHONGKHAM** | `IdPhongKham` | `CHAR(13)` | `PK, NOT NULL` | Mã phòng khám (`PK...`) |
 | | `ChuPhongKham` | `CHAR(13)` | `FK -> TAIKHOAN, NOT NULL` | Mã tài khoản chủ phòng khám |
 | | `TenPhongKham` | `VARCHAR(255)` | `NOT NULL` | Tên phòng khám |
@@ -233,12 +234,14 @@ Toàn bộ khóa chính (`PK`) và khóa ngoại (`FK`) tham chiếu ID đều d
 | | `TrangThai` | `VARCHAR(50)` | `NOT NULL` | `Hiển thị`, `Ẩn` |
 | | `ThoiGianBatDau` | `TIMESTAMP` | `NULL` | Ngày giờ bắt đầu áp dụng (khớp PostgreSQL hiện tại) |
 | | `ThoiGianKetThuc` | `TIMESTAMP` | `NULL` | Ngày giờ kết thúc áp dụng (khớp PostgreSQL hiện tại) |
+| | `HinhAnh` | `VARCHAR(500)` | `NULL` | URL ảnh sự kiện http/https |
 | **DICHVU** | `IdDichVu` | `CHAR(13)` | `PK, NOT NULL` | Mã dịch vụ (`DV...`) |
 | | `IdPhongKham` | `CHAR(13)` | `FK -> PHONGKHAM, NOT NULL` | Mã phòng khám |
 | | `TenDichVu` | `VARCHAR(255)` | `NOT NULL` | Tên dịch vụ nha khoa |
 | | `MoTa` | `VARCHAR(255)` | `NULL` | Mô tả dịch vụ |
 | | `Gia` | `DECIMAL(18,2)` | `NOT NULL` | Đơn giá dịch vụ (VNĐ) |
 | | `TrangThai` | `VARCHAR(50)` | `NOT NULL` | `Hiển thị`, `Hoạt động`, `Ngừng cung cấp` |
+| | `HinhAnh` | `VARCHAR(500)` | `NULL` | URL ảnh dịch vụ http/https |
 | **LICHLAMVIEC** | `IdLichLamViec` | `CHAR(13)` | `PK, NOT NULL` | Mã ca làm việc (`LLV...`) |
 | | `IdBacSi` | `CHAR(13)` | `FK -> TAIKHOAN, NOT NULL` | Mã bác sĩ phụ trách |
 | | `IdPhongKham` | `CHAR(13)` | `FK -> PHONGKHAM, NOT NULL` | Mã phòng khám |
@@ -308,6 +311,7 @@ Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng kh�
   - Đăng nhập chặn tài khoản không ở trạng thái `Hoạt động` (`403`). Bệnh nhân cũ chưa có hồ sơ bản thân được tự tạo hồ sơ trước khi nhận token; khóa dòng tài khoản tránh tạo trùng khi đăng nhập đồng thời.
   - `verifyToken` đọc lại vai trò/trạng thái từ DB sau khi kiểm tra JWT để thao tác khóa/đổi vai trò có hiệu lực với token đã cấp. Tài khoản bị khóa/không tồn tại trả `403`; DB không khả dụng khi xác thực trả `503`.
 - **Profile (`/api/profile`):** `GET /`, `PUT /` (đường dẫn hiện tại; tài khoản lấy từ JWT, không có tham số `:idTaiKhoan`)
+  - Trả PascalCase, ngày sinh `YYYY-MM-DD`, đọc/lưu `AnhDaiDien`. Bỏ qua trường ảnh khi không gửi, gửi `null`/chuỗi rỗng để xóa. Trang Profile tách Service/Hook và cập nhật `sessionStorage` sau khi lưu để Header/Sidebar hiển thị avatar ngay.
 - **Patients (`/api/patients`):**
   - Tất cả endpoint yêu cầu Bearer JWT hợp lệ (`401` nếu thiếu/sai/hết hạn). Chỉ được truy cập hồ sơ, người thân, tiền sử và lịch sử khám thuộc `IdTaiKhoan` trong token; truy cập chéo tài khoản trả `403`, dữ liệu không tồn tại trả `404`.
   - `GET /profiles` mặc định lấy tài khoản trong token; tham số `idTaiKhoan` cũ chỉ được dùng khi trùng tài khoản đó. `POST /profiles` lấy chủ hồ sơ từ token; loại `0` trả hồ sơ bản thân sẵn có hoặc tạo mới, loại `1` yêu cầu họ tên/quan hệ người thân.
@@ -322,6 +326,7 @@ Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng kh�
   - Ca có lịch đặt chưa hủy chỉ được sửa `TrangThai`/`GhiChu`; đổi bác sĩ, phòng khám, ngày hoặc giờ trả `409`. Các bản ghi tạo mới dùng `generateId('LLV')`; ca không tồn tại khi sửa trả `404`.
   - `NgayLamViec` trong kết quả `GET /api/schedules` và `GET /api/appointments` là chuỗi ngày `YYYY-MM-DD`, không kèm múi giờ. Frontend giữ nguyên ngày lịch khi chọn/lọc/hiển thị, không chuyển ngày này qua UTC/Local.
 - **Appointments (`/api/appointments`):** `GET /`, `GET /all`, `POST /`, `PUT /:id`, `PUT /:id/cancel`, `GET /manage`, `PUT /:id/status`
+  - Khu vực `Lịch Hẹn Đã Đặt` của Bệnh nhân có tab và số lượng: `all` (mặc định), `pending` (`Đã đặt`/`Chờ duyệt`), `confirmed`, `inProgress`, `completed`, `cancelled`. Lọc tại Hook, đếm trên toàn danh sách tài khoản; thông báo trống theo tab, không thay đổi điều kiện sửa/hủy lịch.
   - Tất cả endpoint yêu cầu JWT. Các endpoint Bệnh nhân giới hạn quyền sở hữu theo tài khoản trong token; không nhận tài khoản khác từ request. `GET /all` chỉ trả các `IdLichLamViec` đã kín chỗ, không trả ID lịch đặt, tài khoản hoặc hồ sơ của người khác.
   - `GET /manage` và `PUT /:id/status` yêu cầu vai trò `Nhân viên`, `Admin`, `Chủ phòng khám`, đặt trước Middleware `scopeAccount` để được quản lý lịch toàn phòng khám. `GET /manage` nhận tùy chọn `date=YYYY-MM-DD`, `status`, trả đủ thông tin lượt khám, bệnh nhân/người thân, người đặt, lịch/giờ/bác sĩ/phòng khám, lý do/ghi chú/trạng thái theo PascalCase.
   - Tab duyệt lịch của Nhân viên mặc định không lọc ngày, nhãn `Ngày khám` và nút `Tất cả ngày` khi đang chọn ngày. API và Frontend ưu tiên lịch `Đã đặt`, sau đó ngày/giờ khám tăng dần để không bỏ sót lịch chờ xác nhận ở ngày khác.
@@ -338,12 +343,14 @@ Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng kh�
   - `PUT /vitals`: dành cho `Y tá`, `Admin`, `Chủ phòng khám`; chỉ ghi khi lịch `Đã xác nhận`/`Đang khám`. Nếu còn `Đã đặt`, trả `409` với `Lịch hẹn chưa được nhân viên xác nhận.` Body dùng `idHoSoBenhNhan` và các trường sinh hiệu/triệu chứng; số phải hữu hạn, không âm và phù hợp kiểu cột, giữ nguyên giá trị `0`. Trường không gửi giữ nguyên; trường gửi `null`/chuỗi rỗng được xóa, nhưng phải có ít nhất một giá trị sinh hiệu/triệu chứng. Trong cùng transaction, khóa lượt khám/hồ sơ, cập nhật `HOSOBENHNHAN` và chuyển `LICHDAT` từ `Đã xác nhận` sang `Đang khám`. Các trạng thái khác trả `409`.
   - `PUT /diagnosis`: dành cho `Bác sĩ`, `Admin`, `Chủ phòng khám`. Body gồm `idHoSoBenhNhan`, `ChuanDoan`, `KetLuan` (bắt buộc, tối đa 255 ký tự mỗi trường). Trong transaction, khóa lượt khám/hồ sơ, cập nhật chẩn đoán/kết luận và `ThoiDiemCapNhat = NOW()`, chuyển lịch liên kết chưa hủy sang `Hoàn thành`. Cho phép bác sĩ tải lại và hiệu chỉnh kết luận sẵn có; không tác động hồ sơ của các lượt khác. Lượt đã hủy trả `409`; hồ sơ chưa gắn lịch/không tồn tại trả `404` khi lưu.
   - Dữ liệu đọc và `RETURNING` đều có alias PascalCase. Frontend tách API trong `examinationService.ts`, logic trong `useNurseExam.ts`/`useDoctorExam.ts` và các Hook dùng chung. Giao diện có bộ lọc ngày/trạng thái, tìm tên/mã hồ sơ, tự nạp form, cảnh báo bệnh nền tông `amber`; khung Phân Tích AI chỉ là placeholder, chưa gọi AI Service.
-- **Clinic (`/api/clinic`):** `GET /info`, `POST /info`, `GET /services`, `POST /services`, `PUT /services/:id`, `GET /events`, `POST /events`, `PUT /events/:id`
+- **Clinic (`/api/clinic`):** `GET /info`, `POST /info`, `GET /services`, `POST /services`, `PUT /services/:id`, `DELETE /services/:id`, `GET /events`, `POST /events`, `PUT /events/:id`, `DELETE /events/:id`
   - `GET /info`, `GET /services`, `GET /events` public. Các API ghi yêu cầu JWT và vai trò `Chủ phòng khám`/`Admin`. Danh sách public chỉ có dịch vụ `Hiển thị`/`Hoạt động`, sự kiện `Hiển thị`; `?manage=true` yêu cầu cùng quyền quản lý và trả cả nội dung đã ngừng/ẩn để chỉnh sửa.
   - `POST /info` lấy `ChuPhongKham` từ JWT, cập nhật phòng khám hiện tại (bản ghi đầu theo `IdPhongKham`) hoặc tạo `generateId('PK')` nếu chưa có. `GET /info` trả bản ghi đó hoặc `null` khi chưa cấu hình. Việc tạo ban đầu được khóa để tránh hai bản ghi đồng thời.
   - Dịch vụ/sự kiện mặc định lấy phòng khám hiện tại nếu không gửi `IdPhongKham`; mã mới qua `generateId('DV')`/`generateId('SK')`. Sửa bản ghi không tồn tại trả `404`; giá dịch vụ không âm, tối đa 2 chữ số thập phân. Ngừng cung cấp dịch vụ/ẩn sự kiện thay cho xóa cứng để giữ dữ liệu.
   - Hai trường thời gian sự kiện dùng `TIMESTAMP` theo PostgreSQL hiện có (đã sửa mô tả `TIME` cũ ở schema trên, không chạy migration thay đổi DB). API nhận/trả chuỗi ngày giờ `YYYY-MM-DDTHH:mm[:ss]` theo giờ phòng khám, form dùng `datetime-local`; nếu có thời gian, cần đủ bắt đầu/kết thúc và bắt đầu trước kết thúc. Toàn bộ dữ liệu đọc/ghi trả alias PascalCase.
   - Tab thông tin phòng khám dùng form toàn chiều rộng, một cột trên màn hình nhỏ và hai cột từ `md`: tên/SĐT, email/địa chỉ, giờ mở/đóng cửa; giới thiệu chiếm cả hai cột. Nút `Lưu thông tin phòng khám` căn phải. Form tạo/sửa dịch vụ và sự kiện vẫn dùng modal.
+  - Dịch vụ/sự kiện đọc/lưu `HinhAnh` trong GET/POST/PUT, URL http/https tối đa 500 ký tự hoặc null. Khi PUT không gửi ảnh, giữ giá trị cũ; null/chuỗi rỗng xóa ảnh. Modal hỗ trợ upload/dán URL, danh sách quản lý có thumbnail và icon Trash2 cạnh Pencil, xác nhận trước khi xóa. Trang chủ/dịch vụ/sự kiện hiển thị ảnh, giữ icon/thẻ mặc định khi không có ảnh hoặc URL tải lỗi.
+  - DELETE chỉ dành Chủ phòng khám/Admin, khóa dòng `FOR UPDATE` và xóa trong transaction. Không tồn tại trả `404`; FK `23503` rollback và trả `409` hướng dẫn dịch vụ chuyển `Ngừng cung cấp` hoặc sự kiện chuyển `Ẩn`. Xóa bản ghi không tự xóa tài nguyên Cloudinary.
 - **Users (`/api/users`):** `GET /`, `POST /`, `PUT /:id`, `DELETE /:id`, chỉ dành cho `Admin` qua JWT và `requireRoles('Admin')`.
   - Danh sách/kết quả ghi trả PascalCase, `NgaySinh` dạng `YYYY-MM-DD`, tuyệt đối không trả `MatKhau`/hash. Tạo tài khoản bằng `generateId('TK')`, hash bcrypt; kiểm tra 6 vai trò chuẩn và trùng tên đăng nhập/CCCD/SĐT/email (`409`). Tài khoản Bệnh nhân có hồ sơ bản thân được tạo trong cùng transaction qua `ensureSelfProfile`.
   - Cập nhật họ tên, vai trò, `Hoạt động`/`Khóa`, SĐT, email, địa chỉ; chỉ đổi hash mật khẩu khi gửi mật khẩu mới không rỗng. Không cho Admin tự khóa hoặc tự đổi khỏi vai trò `Admin` (`400`). Chuyển một tài khoản sang Bệnh nhân cũng bảo đảm hồ sơ bản thân có sẵn.
@@ -351,11 +358,16 @@ Các endpoint quản lý ca, duyệt lịch, tài khoản, thông tin phòng kh�
   - Frontend bảo vệ từng workspace bằng `ClinicalAccess` với đúng một vai trò: Bệnh nhân `/patient-appointments`, `/patient-history`; Nhân viên `/staff`; Y tá `/nurse`; Bác sĩ `/doctor`; Admin `/admin/users`; Chủ phòng khám `/owner/clinic`. Header có liên kết công khai và workspace của chính actor; sidebar chỉ có Trang chủ và nhóm chức năng của actor đó. Admin/Chủ phòng khám không kế thừa menu hoặc quyền vào trang của actor khác. Quyền Backend rộng hơn đã đặc tả ở các API vẫn giữ nguyên.
   - Quản lý tài khoản dùng bảng toàn chiều rộng, nút icon thêm/tải lại/sửa/xóa (có nhãn truy cập); không cho tự xóa trên UI. Form tạo/sửa tài khoản, ca làm việc, dịch vụ và sự kiện nằm trong modal có nút X, Escape và quản lý focus; thao tác tải lại dùng RefreshCw quay khi tải. API ở Services, state/nghiệp vụ ở Hooks; giao diện JSX dùng Tailwind CSS v4.
   - Modal tài khoản không có cảnh báo vàng mặc định. Chỉ cảnh báo khi sửa chính tài khoản đang đăng nhập mà chọn trạng thái khác `Hoạt động`/vai trò khác `Admin`, hoặc có lỗi tự tác động từ Backend; chặn lưu thay đổi tự khóa/đổi vai trò tại Hook. Nút tự xóa vẫn bị vô hiệu hóa.
+  - GET/POST/PUT tài khoản đọc/lưu `AnhDaiDien`, kiểm tra URL cùng chuẩn với danh mục; bảng/modal có avatar và trường upload/dán URL. Login trả `AnhDaiDien`, Header/Sidebar dùng icon mặc định khi chưa có ảnh. Khi Admin lưu ảnh chính mình, đồng bộ session hiện tại.
+- **Upload (`/api/upload`) — đã triển khai:** `POST /` yêu cầu JWT, `multipart/form-data` gồm một field `file` và `folder` trong body hoặc query (`avatars` mặc định, `services`, `events`). Hai folder danh mục chỉ dành `Chủ phòng khám`/`Admin`; các actor đăng nhập đều được upload avatar.
+  - Dùng multer memory storage, tối đa 5MB, chỉ JPEG/PNG/WebP/GIF; kiểm tra MIME và chữ ký file. Thiếu/sai file hoặc folder trả `400`, quá dung lượng `413`, sai quyền `403`. Cloudinary upload vào `clinic-ai/${folder}`, `resource_type: image`, `quality: auto`, `fetch_format: auto`, trả `{ url: secure_url }`; lỗi nhà cung cấp trả `502` với hướng dẫn thử lại/dán URL.
+  - Cấu hình riêng tại `backend/.env`: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (mẫu rỗng trong `.env.example`). Không commit/log secret. Chưa đủ cấu hình trả `503` với hướng dẫn cấu hình hoặc dán URL; không chặn chức năng nhập URL trực tiếp và CRUD.
+  - Frontend tách `uploadService.ts`/`useImageUpload.ts`/`ImageUploadField.tsx`, có preview, trạng thái tải, xóa ảnh; khóa lưu khi đang upload và hủy request khi đóng/rời component. URL lưu trong DB, không lưu file binary; ảnh preview được lấy từ URL đã nhập.
 - **Notifications (`/api/notifications`) — đã triển khai:** `GET /` yêu cầu `verifyToken`, tài khoản/vai trò lấy từ JWT đã đối chiếu DB; không nhận bộ lọc tài khoản từ client. Trả `{ notifications: [{ id, title, message, type, category, link, timestamp }] }`, tối đa 20 phần tử; `type` là `info`/`warning`/`success`. Không tạo bảng mới, không ghi dữ liệu nghiệp vụ. Response không cache.
   - Bệnh nhân: chỉ lịch do tài khoản đặt với trạng thái `Đã xác nhận`, `Đang khám`, `Hoàn thành` có kết luận hoặc `Đã hủy`; nhắc lịch đã xác nhận hôm nay/ngày mai theo giờ Việt Nam; sự kiện `Hiển thị`. Link tới lịch cá nhân, lịch sử hoặc sự kiện.
   - Nhân viên: lịch `Đã đặt` chờ duyệt (tên bệnh nhân, ngày/giờ, bác sĩ), lịch hủy có ngày khám từ 7 ngày trước tới ngày mai và ca làm việc hôm nay; link `/staff`. Y tá: lịch hôm nay đã xác nhận chưa có sinh hiệu hoặc đang khám; link `/nurse`.
   - Bác sĩ: chỉ ca của chính bác sĩ hôm nay, trạng thái đã xác nhận/đang khám. Ưu tiên cảnh báo đã đo sinh hiệu hoặc có tiền sử bệnh; tìm tiền sử cùng cá nhân qua chủ tài khoản/loại hồ sơ và tên/quan hệ nếu là người thân; link `/doctor`.
-  - Admin: 8 tài khoản gần nhất theo mã `TK` giảm dần, tổng số tài khoản khóa và 5 sự kiện `Hiển thị` mới nhất theo mã; link quản lý tài khoản/sự kiện. Chủ phòng khám: tổng lượt hôm nay theo 4 trạng thái chờ duyệt/xác nhận/đang khám/hoàn thành, 5 dịch vụ gần nhất và 5 sự kiện `Hiển thị`; link `/owner/clinic`.
+  - Admin: chỉ có 8 tài khoản gần nhất theo mã `TK` giảm dần và tổng số tài khoản khóa, link `/admin/users`; không truy vấn/trả thông báo sự kiện. Chủ phòng khám: tổng lượt hôm nay theo 4 trạng thái chờ duyệt/xác nhận/đang khám/hoàn thành, 5 dịch vụ gần nhất và 5 sự kiện `Hiển thị`; link `/owner/clinic`.
   - Ưu tiên cảnh báo và tổng hợp trước; lịch ưu tiên chờ duyệt/đang khám rồi ngày khám gần hôm nay, giờ khám; các danh mục dùng mã giảm dần. Bệnh nhân/Nhân viên lấy tối đa 15 lịch để dành chỗ cho sự kiện/ca làm việc. Không coi mã có phần ngẫu nhiên là thứ tự tạo chính xác trong cùng ngày.
   - Mọi `timestamp` trả về đều hợp lệ, không null. Lịch khám/ca làm việc giữ ngày giờ khám với `+07:00`; sự kiện ưu tiên thời gian bắt đầu. Sự kiện chưa có giờ bắt đầu, dịch vụ và tài khoản lấy ngày `YYMMDD` từ mã 13 ký tự `SK`/`DV`/`TK` thành `20YY-MM-DDT00:00:00+07:00`. Tổng hợp hôm nay và trường hợp dữ liệu cũ có mã/ngày không hợp lệ dùng ngày hiện tại theo giờ Việt Nam lúc `08:00:00+07:00`; Controller chuẩn hóa qua utility dùng chung.
   - Giới hạn schema hiện có: chưa lưu thời điểm đăng ký/đổi trạng thái/đăng sự kiện. Mốc từ mã chỉ biểu thị ngày quy ước, không phải giờ tạo chính xác. "Gần đây" của lịch hủy dựa trên ngày khám, không phải ngày hủy. Đây là danh sách suy ra từ trạng thái hiện tại, không phải lịch sử sự kiện được lưu bền vững.

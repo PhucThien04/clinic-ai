@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import API from '../services/api';
+import {clinicService} from '../services/clinicService';
 
 export interface ServiceItem {
+  HinhAnh?:string|null;
   IdDichVu: string;
   TenDichVu: string;
   MoTa: string;
@@ -9,6 +10,7 @@ export interface ServiceItem {
 }
 
 export interface EventItem {
+  HinhAnh?:string|null;
   IdSuKien: string;
   TieuDe: string;
   NoiDung: string;
@@ -32,12 +34,13 @@ export function useClinic() {
         setError(null);
 
         const [serviceRes, eventRes] = await Promise.all([
-          API.get('/clinic/services'),
-          API.get('/clinic/events')
+          clinicService.getServices(),
+          clinicService.getEvents()
         ]);
 
         if (isMounted) {
           const normalizedServices: ServiceItem[] = (serviceRes.data || []).map((item: any) => ({
+            HinhAnh: item.HinhAnh || item.hinhanh || null,
             IdDichVu: item.IdDichVu || item.iddichvu || item.id_dich_vu,
             TenDichVu: item.TenDichVu || item.tendichvu || item.ten_dich_vu,
             MoTa: item.MoTa || item.mota || item.mo_ta || '',
@@ -45,6 +48,7 @@ export function useClinic() {
           }));
 
           const normalizedEvents: EventItem[] = (eventRes.data || []).map((item: any) => ({
+            HinhAnh: item.HinhAnh || item.hinhanh || null,
             IdSuKien: item.IdSuKien || item.idsukien || item.id_su_kien,
             TieuDe: item.TieuDe || item.tieude || item.tieu_de,
             NoiDung: item.NoiDung || item.noidung || item.noi_dung || '',

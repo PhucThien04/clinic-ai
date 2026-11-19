@@ -6,6 +6,8 @@ import { getClinicTimestamp } from "../utils/dateUtils";
 import { authService } from "../services/authService";
 import { appointmentService } from "../services/appointmentService";
 import { getCancellationErrorMessage } from "../utils/patientActionErrors";
+import {appointmentTabs,matchesAppointmentStatus} from '../utils/appointmentStatus';
+import type {AppointmentTab} from '../utils/appointmentStatus';
 
 export interface ScheduleItem {
   IdLichLamViec: string;
@@ -277,7 +279,11 @@ export const usePatientBooking = () => {
     }
   };
 
+  const [appointmentTab,setAppointmentTab]=useState<AppointmentTab>('all');
+  const appointmentStatusTabs=useMemo(()=>appointmentTabs.map(tab=>({...tab,count:appointments.filter(appointment=>matchesAppointmentStatus(appointment.TrangThai,tab.value)).length})),[appointments]);
+  const filteredAppointments=useMemo(()=>appointments.filter(appointment=>matchesAppointmentStatus(appointment.TrangThai,appointmentTab)),[appointments,appointmentTab]);
   return {
+    appointmentTab,setAppointmentTab,appointmentStatusTabs,filteredAppointments,
     profiles,
     appointments,
     availableDates,

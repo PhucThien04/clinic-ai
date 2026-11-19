@@ -1,3 +1,4 @@
+import {UserAvatar} from '../management/MediaImage';
 import type {ReactNode} from 'react';
 import {Link,Navigate,useNavigate,useLocation} from 'react-router-dom';
 import {Activity,LogOut,Home,Users,Calendar,FileText,HeartPulse,Stethoscope,Building2} from 'lucide-react';
@@ -24,7 +25,7 @@ export default function DashboardLayout({children}:{children:ReactNode}){
       </nav>
       <div className="shrink-0 border-t border-slate-200 bg-white p-5">
         <div className="relative mb-3 flex items-center justify-between gap-2">
-        <Link to="/profile" className="flex min-w-0 flex-1 items-center gap-2.5 no-underline"><Users size={22} className="shrink-0 text-sky-600"/>
+        <Link to="/profile" className="flex min-w-0 flex-1 items-center gap-2.5 no-underline"><UserAvatar src={user.AnhDaiDien} name={user.HoTen}/>
           <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{user.HoTen}</p><p className="text-xs text-slate-500">Xem hồ sơ cá nhân</p></div></Link>
         <NotificationBell placement="sidebar"/>
         </div>
