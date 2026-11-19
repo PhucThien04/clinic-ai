@@ -27,7 +27,7 @@ function DoctorWorkspace() {
           {exam.saveMessage && <p role="status" className="rounded-lg bg-teal-50 p-3 text-sm text-teal-800">{exam.saveMessage}</p>}
           {exam.saveError && <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{exam.saveError}</p>}
           {record ? <>
-            <PatientExamSummary record={record} />
+            <PatientExamSummary record={record} onClose={exam.handleClosePatient} />
             <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
               <h2 className="font-bold text-amber-900">Lưu ý bệnh nền / Tiền sử bệnh</h2>
               {record.tienSuBenh.length ? <ul className="mt-3 space-y-3">

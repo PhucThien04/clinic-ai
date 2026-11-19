@@ -9,6 +9,12 @@ export function useClinicalPatient() {
   const [patientError, setPatientError] = useState('');
   const requestId = useRef(0);
   useEffect(() => () => { requestId.current++; }, []);
+  const clearPatientExam = useCallback(() => {
+    requestId.current++;
+    setPatientRecord(null);
+    setPatientError('');
+    setLoadingPatient(false);
+  }, []);
   const fetchPatientExam = useCallback(async (id: string) => {
     const request = ++requestId.current;
     setLoadingPatient(true);
@@ -26,5 +32,5 @@ export function useClinicalPatient() {
       if (request === requestId.current) setLoadingPatient(false);
     }
   }, []);
-  return { patientRecord, loadingPatient, patientError, fetchPatientExam };
+  return { patientRecord, loadingPatient, patientError, fetchPatientExam, clearPatientExam };
 }

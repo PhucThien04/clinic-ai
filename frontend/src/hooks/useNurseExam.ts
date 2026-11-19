@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useClinicalQueue } from './useClinicalQueue';
 import { useClinicalPatient } from './useClinicalPatient';
@@ -13,7 +13,16 @@ export function useNurseExam() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
+  const selectionVersion = useRef(0);
+  const handleClosePatient = () => {
+    selectionVersion.current++;
+    patient.clearPatientExam();
+    setVitals(emptyVitals);
+    setSaveError('');
+    setSaveMessage('');
+  };
   const selectPatient = async (id: string) => {
+    selectionVersion.current++;
     setVitals(emptyVitals); setSaveError(''); setSaveMessage('');
     const record = await patient.fetchPatientExam(id);
     if (record) setVitals(recordToVitals(record));
@@ -21,18 +30,20 @@ export function useNurseExam() {
   const handleSubmitVitals = async (event: FormEvent) => {
     event.preventDefault();
     if (!patient.patientRecord || saving) return;
+    const version = selectionVersion.current;
     setSaving(true); setSaveError(''); setSaveMessage('');
     try {
       const result = await updateClinicalVitals(vitalsToPayload(patient.patientRecord.IdHoSoBenhNhan, vitals));
-      setSaveMessage(result.message);
+      if (version === selectionVersion.current) setSaveMessage(result.message);
       await clinicalQueue.refreshQueue();
+      if (version !== selectionVersion.current) return;
       const record = await patient.fetchPatientExam(patient.patientRecord.IdHoSoBenhNhan);
       if (record) setVitals(recordToVitals(record));
-    } catch (error) { setSaveError(clinicalError(error)); }
+    } catch (error) { if (version === selectionVersion.current) setSaveError(clinicalError(error)); }
     finally { setSaving(false); }
   };
   const canSave = !!patient.patientRecord?.IdChiTietLD
     && !['Đã hủy', 'Hoàn thành'].includes(patient.patientRecord.TrangThaiLich || '');
   return { ...clinicalQueue, ...patient, vitals, setVitals, saving, saveError, saveMessage, canSave,
-    selectPatient, handleSubmitVitals };
+    selectPatient, handleSubmitVitals, handleClosePatient };
 }

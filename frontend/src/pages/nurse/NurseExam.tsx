@@ -24,7 +24,7 @@ function NurseWorkspace() {
           {exam.saveMessage && <p role="status" className="rounded-lg bg-teal-50 p-3 text-sm text-teal-800">{exam.saveMessage}</p>}
           {exam.saveError && <p role="alert" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{exam.saveError}</p>}
           {exam.patientRecord ? <>
-            <PatientExamSummary record={exam.patientRecord} />
+            <PatientExamSummary record={exam.patientRecord} onClose={exam.handleClosePatient} />
             <form onSubmit={exam.handleSubmitVitals} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="mb-4 font-bold text-slate-900">Sinh hiệu & triệu chứng</h2>
               {!exam.canSave && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Lượt khám đã hoàn thành/đã hủy hoặc hồ sơ chưa gắn lịch. Chỉ có thể xem dữ liệu.</p>}
