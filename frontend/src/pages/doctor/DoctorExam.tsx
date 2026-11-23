@@ -13,7 +13,7 @@ export default function DoctorExam() {
     <div className="mx-auto max-w-[1600px] space-y-6">
       <header><h1 className="text-2xl font-bold text-slate-900">Phòng khám Bác sĩ</h1>
         <p className="mt-2 text-sm text-slate-500">Tra cứu hồ sơ, lưu ý bệnh nền và xem các lần điều trị trước khi kết luận lượt khám hiện tại.</p></header>
-      <div className="grid items-start gap-6 2xl:grid-cols-[310px_minmax(0,1fr)_340px] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid items-start gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         <ClinicalQueuePanel state={exam} selectedId={record?.IdHoSoBenhNhan}
           busy={exam.saving || exam.loadingPatient} onSelect={id => void exam.fetchPatientExam(id)} />
         <div className="min-w-0 space-y-5">
@@ -73,9 +73,9 @@ export default function DoctorExam() {
             </form>
           </> : !exam.loadingPatient && <p className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">Chọn một bệnh nhân từ danh sách lịch khám bên trái để bắt đầu.</p>}
         </div>
-        <ClinicalAIPanel selected={!!record} canAnalyze={exam.canSave&&!exam.loadingPatient} results={exam.aiResults} alerts={exam.vitalAlerts}
-          disclaimer={exam.aiDisclaimer} metadata={exam.aiMetadata} loading={exam.loadingAI} analyzing={exam.analyzingAI} error={exam.aiError} onAnalyze={()=>void exam.handleAnalyzeAI()}/>
       </div>
+        <ClinicalAIPanel open={exam.aiOpen} onToggle={exam.toggleAIPanel} onClose={exam.closeAIPanel} patientName={record?.TenBenhNhan} selected={!!record} canAnalyze={exam.canSave&&!exam.loadingPatient} results={exam.aiResults} alerts={exam.vitalAlerts}
+          disclaimer={exam.aiDisclaimer} metadata={exam.aiMetadata} loading={exam.loadingAI} analyzing={exam.analyzingAI} error={exam.aiError} onAnalyze={()=>void exam.handleAnalyzeAI()}/>
     </div>
   </DashboardLayout>;
 }

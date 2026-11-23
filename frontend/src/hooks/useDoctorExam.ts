@@ -15,6 +15,22 @@ export function useDoctorExam() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
+  const [aiOpen, setAiOpen] = useState(false);
+  const openAIPanel = () => setAiOpen(true);
+  const closeAIPanel = () => setAiOpen(false);
+  const toggleAIPanel = () => setAiOpen(open => !open);
+  useEffect(() => {
+    if (!aiOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setAiOpen(false);
+        document.getElementById('clinical-ai-trigger')?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    document.getElementById('clinical-ai-close')?.focus();
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [aiOpen]);
   const selectionVersion = useRef(0);
   const aiRequest=useRef(0);const analyzeOwner=useRef<number|null>(null);
   const [aiResults,setAIResults]=useState<AIResultRecord[]>([]);const [vitalAlerts,setVitalAlerts]=useState<VitalAlertItem[]>([]);
@@ -44,6 +60,7 @@ export function useDoctorExam() {
     }
   };
   const handleAnalyzeAI=async()=>{
+    setAiOpen(true);
     const record=patient.patientRecord;const version=selectionVersion.current;
     if(!record?.IdChiTietLD||record.TrangThaiLich==='Đã hủy'||analyzeOwner.current===version)return;
     analyzeOwner.current=version;const request=++aiRequest.current;setLoadingAI(false);setAnalyzingAI(true);setAIError('');
@@ -71,6 +88,7 @@ export function useDoctorExam() {
   };
   const canSave = !!patient.patientRecord?.IdChiTietLD && patient.patientRecord.TrangThaiLich !== 'Đã hủy';
   return { ...clinicalQueue, ...patient, diagnosisData, setDiagnosisData, saving, saveError, saveMessage, canSave,
+    aiOpen, openAIPanel, closeAIPanel, toggleAIPanel,
     aiResults,vitalAlerts,aiDisclaimer,aiMetadata,loadingAI,analyzingAI,aiError,handleAnalyzeAI,
     fetchPatientExam, handleSaveDiagnosis, handleClosePatient };
 }
