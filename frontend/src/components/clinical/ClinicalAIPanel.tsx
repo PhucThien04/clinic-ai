@@ -1,4 +1,5 @@
 import {LoaderCircle,Sparkles,X} from 'lucide-react';
+import {createPortal} from 'react-dom';
 import type {AIAnalyzeResponse,AIResultRecord,VitalAlertItem} from '../../services/aiService';
 import {aiSections} from '../../utils/aiConfig';
 export function ClinicalAIPanel({open,onToggle,onClose,patientName,selected,canAnalyze,results,alerts,disclaimer,metadata,loading,analyzing,error,onAnalyze}:{
@@ -6,14 +7,14 @@ export function ClinicalAIPanel({open,onToggle,onClose,patientName,selected,canA
   selected:boolean;canAnalyze:boolean;results:AIResultRecord[];alerts:VitalAlertItem[];disclaimer:string;
   metadata:AIAnalyzeResponse['metadata']|null;loading:boolean;analyzing:boolean;error:string;onAnalyze:()=>void;
 }){
-  return <>
-    <button id="clinical-ai-trigger" type="button" onClick={onToggle} aria-expanded={open} aria-controls="clinical-ai-popup"
+  return createPortal(<>
+    {!open&&<button id="clinical-ai-trigger" type="button" onClick={onToggle} aria-expanded={open} aria-controls="clinical-ai-popup"
       className="fixed bottom-6 right-6 z-40 inline-flex h-12 items-center gap-2 rounded-full bg-teal-600 px-5 font-semibold text-white shadow-lg hover:bg-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600">
       <Sparkles size={21}/>Trợ lý AI
       {selected&&(results.length>0||alerts.length>0)&&<span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-amber-400"><span className="sr-only">Có kết quả hoặc cảnh báo AI</span></span>}
-    </button>
+    </button>}
     {open&&<section id="clinical-ai-popup" role="dialog" aria-modal="false" aria-labelledby="clinical-ai-title"
-      className="fixed bottom-24 right-6 z-50 flex max-h-[calc(100dvh-7.5rem)] w-[min(430px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      className="fixed bottom-6 right-6 z-50 flex max-h-[calc(100dvh-3rem)] w-[min(430px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
     <header className="flex shrink-0 items-start gap-3 bg-teal-600 p-4 text-white">
       <Sparkles size={22} className="mt-0.5 shrink-0"/>
       <div className="min-w-0 flex-1"><h2 id="clinical-ai-title" className="font-bold">Trợ lý AI Lâm sàng</h2><p className="mt-1 truncate text-sm text-teal-50" title={patientName??undefined}>{selected?patientName||'Bệnh nhân đang chọn':'Chưa chọn hồ sơ'}</p></div>
@@ -40,5 +41,5 @@ export function ClinicalAIPanel({open,onToggle,onClose,patientName,selected,canA
     </div>
     <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 text-xs leading-5 text-slate-500">{disclaimer}</footer>
     </section>}
-  </>;
+  </>, document.body);
 }
