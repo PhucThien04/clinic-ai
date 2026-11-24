@@ -17,7 +17,7 @@ import { formatDate } from "../../utils/dateUtils";
 export default function PatientAppointments(): React.JSX.Element {
   const {
     profiles,
-    appointments,
+    appointmentTab,setAppointmentTab,appointmentStatusTabs,filteredAppointments,
     availableDates,
     filteredSchedules,
     bookedScheduleIds,
@@ -203,11 +203,12 @@ export default function PatientAppointments(): React.JSX.Element {
           <h2 className="text-[18px] text-slate-800 mb-4 flex items-center gap-2">
             <Calendar size={20} color="#0d9488" /> Lịch Hẹn Đã Đặt
           </h2>
-          {appointments.length === 0 ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm text-center p-[30px] text-slate-500">Chưa có lịch hẹn khám nào.</div>
+          <div className="mb-4 flex flex-wrap gap-2" aria-label="Lọc trạng thái lịch hẹn">{appointmentStatusTabs.map(tab=><button type="button" key={tab.value} aria-pressed={appointmentTab===tab.value} onClick={()=>setAppointmentTab(tab.value)} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${appointmentTab===tab.value?'border-sky-600 bg-sky-600 text-white':'border-slate-200 bg-white text-slate-600 hover:bg-sky-50'}`}>{tab.label} ({tab.count})</button>)}</div>
+          {filteredAppointments.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm text-center p-[30px] text-slate-500">{appointmentTab==='all'?'Chưa có lịch hẹn khám nào.':'Chưa có lịch hẹn trong nhóm trạng thái này.'}</div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,_minmax(340px,_1fr))] gap-4">
-              {appointments.map((apt) => {
+              {filteredAppointments.map((apt) => {
                 const showCancelStatus =
                   cancelStatus.id === apt.IdChiTietLD && cancelStatus.msg;
                 const canCancel =

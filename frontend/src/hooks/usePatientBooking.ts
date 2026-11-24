@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import {getApiErrorMessage} from '../utils/apiErrors';
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { patientService } from "../services/patientService";
@@ -6,8 +7,10 @@ import { getClinicTimestamp } from "../utils/dateUtils";
 import { authService } from "../services/authService";
 import { appointmentService } from "../services/appointmentService";
 import { getCancellationErrorMessage } from "../utils/patientActionErrors";
+import {appointmentTabs,matchesAppointmentStatus} from '../utils/appointmentStatus';
+import type {AppointmentTab} from '../utils/appointmentStatus';
 
-export interface ScheduleItem {
+interface ScheduleItem {
   IdLichLamViec: string;
   TenBacSi: string;
   TenPhongKham: string;
@@ -18,7 +21,7 @@ export interface ScheduleItem {
   GhiChu?: string;
 }
 
-export interface AppointmentItem {
+interface AppointmentItem {
   IdChiTietLD: string;
   IdLichDat: string;
   NgayLamViec: string;
@@ -71,13 +74,14 @@ export const usePatientBooking = () => {
   const [editError, setEditError] = useState('');
 
   useEffect(() => {
-    if (location.state && (location.state as any).defaultReason) {
-      setLiDoKham((location.state as any).defaultReason);
+    if (location.state && location.state.defaultReason) {
+      queueMicrotask(()=>setLiDoKham(location.state.defaultReason));
     }
   }, [location.state]);
 
-  const fetchData = async () => {
-    if (!currentUser) return;
+  const currentUserId=currentUser?.IdTaiKhoan as string|undefined;
+  const fetchData = useCallback(async () => {
+    if (!currentUserId) return;
     try {
       const [resSched, resApt, resProf, resAllApt] = await Promise.all([
         appointmentService.getSchedules(),
@@ -91,7 +95,7 @@ export const usePatientBooking = () => {
 
       const bookedSet = new Set<string>();
       const allAppts = [...(resAllApt.data || []), ...(resApt.data || [])];
-      allAppts.forEach((a: any) => {
+      allAppts.forEach((a: {IdLichLamViec?:string;TrangThai?:string}) => {
         if (a.IdLichLamViec && a.TrangThai !== "Đã hủy")
           bookedSet.add(a.IdLichLamViec);
       });
@@ -107,17 +111,13 @@ export const usePatientBooking = () => {
         return true;
       });
       setProfiles(profData);
-      if (profData.length > 0 && !selectedProfile) {
-        setSelectedProfile(profData[0].IdHoSoBenhNhan);
-      }
+      setSelectedProfile(previous=>previous||profData[0]?.IdHoSoBenhNhan||'');
     } catch (err) {
       console.error("Lỗi đồng bộ dữ liệu đặt lịch:", err);
     }
-  };
+  },[currentUserId]);
 
-  useEffect(() => {
-    fetchData();
-  }, [currentUser?.IdTaiKhoan]);
+  useEffect(() => {let active=true;queueMicrotask(()=>{if(active)void fetchData();});return()=>{active=false;};}, [fetchData]);
 
   const filterKeyword = useMemo(() => {
     if (
@@ -133,9 +133,11 @@ export const usePatientBooking = () => {
     return "";
   }, [liDoKham]);
 
+  const [now,setNow]=useState(Date.now);
+  useEffect(()=>{const timer=window.setInterval(()=>setNow(Date.now()),30000);return()=>window.clearInterval(timer);},[]);
   const relevantSchedules = useMemo(() => {
     const activeSchedules = schedules.filter(s => s.TrangThai === 'Hoạt động'
-      && getClinicTimestamp(s.NgayLamViec, s.GioBatDau) > Date.now());
+      && getClinicTimestamp(s.NgayLamViec, s.GioBatDau) > now);
     if (!filterKeyword) return activeSchedules;
     return activeSchedules.filter((s) => {
       const note = (s.GhiChu || "").toLowerCase();
@@ -147,7 +149,7 @@ export const usePatientBooking = () => {
         (cleanNote.length > 4 && filterKeyword.includes(cleanNote))
       );
     });
-  }, [schedules, filterKeyword]);
+  }, [schedules, filterKeyword,now]);
 
   const availableDates = useMemo(() => {
     return Array.from(
@@ -161,14 +163,10 @@ export const usePatientBooking = () => {
       .sort();
   }, [relevantSchedules]);
 
-  useEffect(() => {
-    if (availableDates.length > 0 && !availableDates.includes(selectedDate))
-      setSelectedDate(availableDates[0]);
-    else if (availableDates.length === 0) setSelectedDate("");
-  }, [availableDates, selectedDate]);
+  const effectiveDate=availableDates.includes(selectedDate)?selectedDate:availableDates[0]||'';
 
   const filteredSchedules = relevantSchedules.filter((s) =>
-    s.NgayLamViec.startsWith(selectedDate),
+    s.NgayLamViec.startsWith(effectiveDate),
   );
 
   const handleBooking = async (e: React.FormEvent) => {
@@ -194,10 +192,10 @@ export const usePatientBooking = () => {
       setStatus({ type: "success", msg: "Đặt lịch khám thành công!" });
       setSelectedScheduleId("");
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus({
         type: "error",
-        msg: err.response?.data?.error || "Lỗi khi đặt lịch khám!",
+        msg: getApiErrorMessage(err,"Lỗi khi đặt lịch khám!"),
       });
     } finally {
       setLoading(false);
@@ -206,10 +204,10 @@ export const usePatientBooking = () => {
 
   const canEditAppointment = (appointment: AppointmentItem) =>
     ['Đã đặt', 'Chờ duyệt'].includes(appointment.TrangThai)
-    && getClinicTimestamp(appointment.NgayLamViec, appointment.GioBatDau) - Date.now() >= 6 * 60 * 60 * 1000;
+    && getClinicTimestamp(appointment.NgayLamViec, appointment.GioBatDau) - now >= 6 * 60 * 60 * 1000;
 
   const editSchedules = schedules.filter(schedule => schedule.TrangThai === 'Hoạt động'
-    && getClinicTimestamp(schedule.NgayLamViec, schedule.GioBatDau) - Date.now() >= 6 * 60 * 60 * 1000
+    && getClinicTimestamp(schedule.NgayLamViec, schedule.GioBatDau) - now >= 6 * 60 * 60 * 1000
     && (!bookedScheduleIds.has(schedule.IdLichLamViec) || schedule.IdLichLamViec === editingAppointment?.IdLichLamViec));
 
   const openEditAppointment = (appointment: AppointmentItem) => {
@@ -235,7 +233,7 @@ export const usePatientBooking = () => {
       await fetchData();
     } catch (error: unknown) {
       setEditError(isAxiosError<{ error?: string }>(error)
-        ? error.response?.data?.error || 'Không thể đổi lịch. Vui lòng thử lại.'
+        ? getApiErrorMessage(error,'Không thể đổi lịch. Vui lòng thử lại.')
         : 'Không thể đổi lịch. Vui lòng thử lại.');
     } finally {
       setLoading(false);
@@ -277,13 +275,16 @@ export const usePatientBooking = () => {
     }
   };
 
+  const [appointmentTab,setAppointmentTab]=useState<AppointmentTab>('all');
+  const appointmentStatusTabs=useMemo(()=>appointmentTabs.map(tab=>({...tab,count:appointments.filter(appointment=>matchesAppointmentStatus(appointment.TrangThai,tab.value)).length})),[appointments]);
+  const filteredAppointments=useMemo(()=>appointments.filter(appointment=>matchesAppointmentStatus(appointment.TrangThai,appointmentTab)),[appointments,appointmentTab]);
   return {
+    appointmentTab,setAppointmentTab,appointmentStatusTabs,filteredAppointments,
     profiles,
-    appointments,
     availableDates,
     filteredSchedules,
     bookedScheduleIds,
-    selectedDate,
+    selectedDate:effectiveDate,
     setSelectedDate,
     selectedScheduleId,
     setSelectedScheduleId,

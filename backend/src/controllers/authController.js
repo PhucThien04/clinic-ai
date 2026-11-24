@@ -44,8 +44,8 @@ exports.register = async (req, res) => {
 
     // Thêm mới vào bảng TAIKHOAN
     const query = `
-      INSERT INTO TAIKHOAN (IdTaiKhoan, TenTaiKhoan, MatKhau, HoTen, CCCD, NgaySinh, GioiTinh, Email, SoDienThoai, DiaChi, TrangThai, VaiTro)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      INSERT INTO TAIKHOAN (IdTaiKhoan, TenTaiKhoan, MatKhau, HoTen, CCCD, NgaySinh, GioiTinh, Email, SoDienThoai, DiaChi, TrangThai, VaiTro, ThoiDiemCapNhat)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')
       RETURNING IdTaiKhoan AS "IdTaiKhoan", TenTaiKhoan AS "TenTaiKhoan",
         HoTen AS "HoTen", VaiTro AS "VaiTro", TrangThai AS "TrangThai"
     `;
@@ -103,7 +103,7 @@ exports.login = async (req, res) => {
         MatKhau AS "MatKhau", 
         HoTen AS "HoTen", 
         VaiTro AS "VaiTro", 
-        Email AS "Email", TrangThai AS "TrangThai"
+        Email AS "Email", TrangThai AS "TrangThai", AnhDaiDien AS "AnhDaiDien"
       FROM TAIKHOAN 
       WHERE TenTaiKhoan = $1`, 
       [TenTaiKhoan]
@@ -153,7 +153,8 @@ exports.login = async (req, res) => {
         TenTaiKhoan: user.TenTaiKhoan,
         HoTen: user.HoTen,
         VaiTro: user.VaiTro,
-        Email: user.Email
+        Email: user.Email,
+        AnhDaiDien: user.AnhDaiDien
       }
     });
 

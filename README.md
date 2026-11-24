@@ -7,29 +7,40 @@
 
 Hệ thống số hóa quy trình phòng khám với 6 vai trò người dùng: Bệnh nhân, Nhân viên, Y tá, Bác sĩ, Admin và Chủ phòng khám. Phạm vi gồm tài khoản, hồ sơ bản thân/người thân, bệnh nền, lịch làm việc, đặt/đổi/hủy lịch và lịch sử khám qua từng đợt. Trợ lý AI tóm tắt, phân tích và cảnh báo lâm sàng là phần tích hợp theo đặc tả, chỉ hỗ trợ tham khảo cho bác sĩ.
 
-Hiện có mã Frontend và Backend, cùng kiểm thử luồng Bệnh nhân. Thư mục `ai-service/` đang rỗng; chưa có ứng dụng FastAPI hoặc luồng gọi External AI API để chạy thử.
+Đã triển khai Frontend, Backend và AI Service FastAPI với rule engine, adapter Gemini/OpenAI-compatible và fallback khi chưa có key hoặc provider lỗi. Kết quả chỉ hỗ trợ tham khảo cho bác sĩ.
 
 ## 2. Công nghệ & Kiến trúc
 
 - **Frontend:** React 19, TypeScript, Vite 8, React Router, Axios, Lucide React và **Tailwind CSS v4**. Tích hợp bằng `@tailwindcss/vite` trong `frontend/vite.config.ts`; `frontend/src/index.css` chứa `@import "tailwindcss";`.
 - **Backend:** Node.js, Express 5, REST API, JWT (`jsonwebtoken`), bcrypt và `pg`; `dotenv` đọc cấu hình từ `backend/.env`. Chạy development bằng nodemon.
 - **Database:** PostgreSQL 15 trong Docker. Backend chạy trên máy host và kết nối qua cổng publish `localhost:5432`; dữ liệu nằm trong Docker volume, không nằm trong thư mục SQL của repo.
-- **AI Service dự kiến:** Python/FastAPI, chỉ nhận dữ liệu qua Backend và gọi External AI API; không kết nối PostgreSQL trực tiếp.
+- **AI Service:** Python/FastAPI, chỉ nhận dữ liệu qua Backend và gọi External AI API; không kết nối PostgreSQL trực tiếp.
 - **Clean Code/MVC:** View là React; Express Routes chuyển request qua Middleware đến Controller; `services/` chứa nghiệp vụ dùng chung, `config/db.js` cung cấp kết nối dữ liệu. Hiện SQL nằm trong Controller/Service, chưa có thư mục `models/`; không coi đây là MVC đã tách Model hoàn chỉnh. Frontend tách API vào Service, state/nghiệp vụ vào Hook, hàm thuần vào Utility và JSX vào Page/Component.
 
 ```text
 React/Vite (host :5173) -> Express (host :5000) -> PostgreSQL (Docker :5432)
                                 |
-                                +-> FastAPI -> External AI API (dự kiến)
+                                +-> FastAPI -> External AI API (cấu hình qua .env)
 ```
 
 ## 3. Cấu trúc thư mục thực tế
 
-Sơ đồ liệt kê các thư mục nguồn và tệp cấu hình chính tại thời điểm rà soát 18/11/2026. Đã lược bỏ `.git/`, dependency `node_modules/`, output `dist/` và tệp bí mật `backend/.env`.
+Sơ đồ liệt kê các thư mục nguồn và tệp cấu hình chính tại thời điểm rà soát 20/11/2026. Đã lược bỏ `.git/`, dependency `node_modules/`, output `dist/` và tệp bí mật `backend/.env`.
 
 ```text
 clinic-ai/
-├── ai-service/               # Đang rỗng; dành cho Python/FastAPI dự kiến
+├── ai-service/               # FastAPI; không kết nối DB
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py           # /health, /analyze
+│   │   ├── config.py
+│   │   ├── schemas.py
+│   │   ├── rules/            # __init__.py, vital_rules.py
+│   │   ├── prompts/          # __init__.py, clinical_prompt.py
+│   │   └── services/         # __init__.py, llm_service.py
+│   ├── tests/                # Cục bộ, Git ignore
+│   ├── .env.example
+│   └── requirements.txt
 ├── backend/
 │   ├── src/
 │   │   ├── config/           # db.js: PostgreSQL Pool qua pg
@@ -39,6 +50,7 @@ clinic-ai/
 │   │   ├── services/        # Nghiệp vụ dùng chung, tạo hồ sơ bản thân
 │   │   ├── utils/           # Sinh ID CHAR(13)
 │   │   └── server.js        # Entry point Backend
+│   ├── migrations/          # SQL chạy thủ công, không gắn startup
 │   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
 │   ├── .env.example         # Mẫu cấu hình Backend có nội dung
 │   ├── package.json
@@ -46,10 +58,9 @@ clinic-ai/
 ├── frontend/
 │   ├── public/              # Tài nguyên tĩnh
 │   ├── src/
-│   │   ├── assets/
 │   │   ├── components/
 │   │   ├── hooks/
-│   │   ├── pages/           # auth, doctor, home, nurse, patient
+│   │   ├── pages/           # admin, auth, doctor, home, nurse, owner, patient, staff
 │   │   ├── services/
 │   │   ├── utils/
 │   │   ├── App.tsx
@@ -73,11 +84,11 @@ clinic-ai/
 └── README.md
 ```
 
-Hiện không có `.ai-workflow/`, `database/`, `docs/`, `Dockerfile` hoặc Docker Compose trong workspace. Thư mục rỗng `ai-service/` không được Git lưu nếu chưa có tệp, nên có thể vắng mặt khi clone mới. Schema 11 bảng được đặc tả trong `PROJECT_SPEC.md`; repo chưa có SQL bootstrap, migration hoặc seed để tự khởi tạo schema đó.
+Hiện không có `.ai-workflow/`, `database/`, `docs/`, `Dockerfile` hoặc Docker Compose trong workspace. Schema 11 bảng được đặc tả trong `PROJECT_SPEC.md`; repo chưa có SQL bootstrap/seed đầy đủ. `backend/migrations/` chỉ chứa SQL thủ công mở rộng nội dung AI, không chạy từ server.
 
 ## 4. Hướng dẫn cài đặt & Chạy thử (Development)
 
-Các lệnh dưới đây dùng PowerShell, bắt đầu từ thư mục gốc repo. Cần **Node.js 22.14+**, npm và Docker Desktop đang chạy với Linux containers. Vite đang cài đặt yêu cầu Node.js `^20.19.0 || >=22.12.0`; mốc 22.14+ cũng đáp ứng utility test hiện có. Python chưa cần cho hai dịch vụ đã triển khai.
+Các lệnh dưới đây dùng PowerShell, bắt đầu từ thư mục gốc repo. Cần **Node.js 22.14+**, npm, Docker Desktop với Linux containers và Python 3.11+ (đã kiểm tra bằng Python 3.13). Vite yêu cầu Node.js `^20.19.0 || >=22.12.0`.
 
 ### 4.1. PostgreSQL qua Docker
 
@@ -132,6 +143,8 @@ Chỉ sao chép khi chưa có `backend/.env`; nếu đã có, cập nhật cấu
 | `DB_USER` | User PostgreSQL, ví dụ `postgres` |
 | `DB_PASSWORD` | Mật khẩu DB do bạn cấu hình |
 | `JWT_SECRET` | Secret riêng cho môi trường cục bộ, bắt buộc điền |
+| `AI_SERVICE_URL` | URL FastAPI, mặc định `http://localhost:8000` |
+| `AI_SERVICE_TIMEOUT_MS` | Timeout gọi AI Service, mặc định `25000` |
 
 Backend đọc `.env` theo thư mục chạy, vì vậy cần chạy lệnh trong `backend/`. `.env.example` ở gốc hiện rỗng, không thay thế mẫu trong `backend/`. Không commit `.env`, mật khẩu hoặc token. Nếu sau này container hóa Backend, cần cấu hình `DB_HOST` theo tên dịch vụ/container trên cùng Docker network thay cho `localhost`.
 
@@ -153,7 +166,24 @@ npm ci
 npm run dev
 ```
 
-Frontend: thường là `http://localhost:5173` (xem URL Vite in ra). Axios hiện trỏ đến `http://localhost:5000/api` trong `frontend/src/services/api.ts`. Không có bước `pip install`/`uvicorn` chạy được ở hiện trạng vì `ai-service/` chưa có `requirements.txt` hoặc entry point FastAPI.
+Frontend: thường là `http://localhost:5173` (xem URL Vite in ra). Axios hiện trỏ đến `http://localhost:5000/api` trong `frontend/src/services/api.ts`.
+
+### 4.4. AI Service
+
+Terminal thứ ba, từ thư mục gốc:
+
+```powershell
+cd ai-service
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# Chỉ sao chép nếu chưa có .env cục bộ:
+Copy-Item .env.example .env
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+GET `http://localhost:8000/health` kiểm tra dịch vụ. Cấu hình `AI_PROVIDER` (gemini/openai/openai-compatible), `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL`, `AI_TIMEOUT_SECONDS` (mặc định 20) trong `ai-service/.env`. Khi đổi provider, cập nhật cả base URL và model tương ứng. Không cần key để thử fallback. FastAPI không truy cập DB; trình duyệt chỉ gọi Backend có JWT.
+
+DB cũ có `AIKETQUA.NoiDung VARCHAR(255)` cần chạy thủ công `backend/migrations/20261120_ai_result_content.sql` để đổi sang TEXT, bảo toàn dữ liệu. Backend không tự chạy migration. Phân tích lưu ba phần TOMTAT/PHANTICH/CANHBAO theo lượt khám, không thay đổi chẩn đoán.
 
 ## 5. Kiểm thử
 
@@ -164,3 +194,8 @@ Các thư mục `tests/` chỉ được giữ cục bộ và đã gỡ khỏi Gi
 - Tại `frontend/`: `node --test tests/patientActions.test.cjs` kiểm tra ngày tháng/thông báo lỗi.
 - Tại `frontend/`: `npm run build` chạy TypeScript và Vite build; output nằm trong `frontend/dist/` và không commit.
 - Trên PowerShell có chặn `npm.ps1`, dùng `npm.cmd` thay cho `npm`.
+
+- Tại `ai-service/`: `.\.venv\Scripts\python.exe -m pytest` kiểm tra dữ liệu giả lập, rule engine và provider mocks.
+- Tại `frontend/`: `npm run lint` kiểm tra ESLint.
+
+Kiểm thử tích hợp AI đầu-cuối cần `.venv` và dependencies trong `ai-service/`; test tự khởi động FastAPI không có API key và dọn tiến trình sau khi chạy. Provider dùng mock, không xác nhận kết nối LLM thật. Integration test dùng schema `patient_test_*`/`clinical_test_*` cách ly.

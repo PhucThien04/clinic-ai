@@ -1,9 +1,39 @@
 const pool = require('../config/db');
 const { generateId } = require('../utils/idGenerator');
+const management = require('../utils/managementUtils');
 
 const editableStates = ['Đã đặt', 'Chờ duyệt'];
 const sixHours = 6 * 60 * 60 * 1000;
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
+
+exports.getManagedAppointments = management.handle(async (req,res) => {
+  const day = req.query.date ? management.date(req.query.date) : null;
+  const status = req.query.status ? management.choice(req.query.status,['Đã đặt','Đã xác nhận','Đang khám','Hoàn thành','Đã hủy'],'Trạng thái') : null;
+  const result = await pool.query(`SELECT c.IdChiTietLD AS "IdChiTietLD", d.IdLichDat AS "IdLichDat", h.IdHoSoBenhNhan AS "IdHoSoBenhNhan",
+    CASE WHEN h.LoaiThongTin=0 THEN tk.HoTen ELSE nt.HoTen END AS "TenBenhNhan", h.LoaiThongTin AS "LoaiThongTin", nt.MoiQuanHe AS "MoiQuanHe",
+    CASE WHEN h.LoaiThongTin=0 THEN tk.SoDienThoai ELSE nt.SoDienThoai END AS "SoDienThoai", booker.HoTen AS "TenNguoiDat",
+    TO_CHAR(l.NgayLamViec,'YYYY-MM-DD') AS "NgayLamViec", l.GioBatDau AS "GioBatDau", l.GioKetThuc AS "GioKetThuc",
+    bs.HoTen AS "TenBacSi", pk.TenPhongKham AS "TenPhongKham", c.LiDoKham AS "LiDoKham", c.GhiChu AS "GhiChu", d.TrangThai AS "TrangThai"
+    FROM CHITIETLICHDAT c JOIN LICHDAT d ON d.IdLichDat=c.IdLichDat JOIN HOSOBENHNHAN h ON h.IdHoSoBenhNhan=c.IdHoSoBenhNhan
+    JOIN TAIKHOAN tk ON tk.IdTaiKhoan=h.IdTaiKhoan JOIN TAIKHOAN booker ON booker.IdTaiKhoan=d.IdTaiKhoan
+    JOIN LICHLAMVIEC l ON l.IdLichLamViec=c.IdLichLamViec JOIN TAIKHOAN bs ON bs.IdTaiKhoan=l.IdBacSi
+    JOIN PHONGKHAM pk ON pk.IdPhongKham=l.IdPhongKham LEFT JOIN THONGTINNGUOITHAN nt ON nt.IdHoSoBenhNhan=h.IdHoSoBenhNhan
+    WHERE ($1::date IS NULL OR l.NgayLamViec=$1::date) AND ($2::text IS NULL OR d.TrangThai=$2)
+    ORDER BY CASE WHEN d.TrangThai='Đã đặt' THEN 0 ELSE 1 END,l.NgayLamViec,l.GioBatDau,c.IdChiTietLD`,[day,status]);
+  res.json(result.rows);
+});
+exports.updateAppointmentStatus = management.handle(async (req,res) => {
+  const target = management.choice(req.body?.TrangThai,['Đã xác nhận','Đã hủy'],'Trạng thái');
+  await management.transaction(async client => {
+    const result = await client.query(`SELECT d.IdLichDat AS "IdLichDat",d.TrangThai AS "TrangThai"
+      FROM CHITIETLICHDAT c JOIN LICHDAT d ON d.IdLichDat=c.IdLichDat WHERE c.IdChiTietLD=$1 FOR UPDATE OF c,d`,[req.params.id]);
+    if(!result.rows.length) fail(404,'Không tìm thấy lịch đặt.');
+    const row=result.rows[0];
+    if(!((row.TrangThai==='Đã đặt' && ['Đã xác nhận','Đã hủy'].includes(target)) || (row.TrangThai==='Đã xác nhận' && target==='Đã hủy'))) fail(409,'Không thể chuyển trạng thái lịch hiện tại. Lịch đã xử lý hoặc đang khám.');
+    await client.query(`UPDATE LICHDAT SET TrangThai=$1,ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat=$2`,[target,row.IdLichDat]);
+  });
+  res.json({message:'Đã cập nhật trạng thái lịch đặt.'});
+});
 
 async function transaction(res, action) {
   let client;
@@ -82,7 +112,7 @@ exports.createAppointment = (req, res) => transaction(res, async client => {
   }
   const idLichDat = generateId('LD');
   const idChiTietLD = generateId('CT');
-  await client.query('INSERT INTO LICHDAT (IdLichDat, IdTaiKhoan, TrangThai) VALUES ($1, $2, $3)', [idLichDat, idTaiKhoan, 'Đã đặt']);
+  await client.query(`INSERT INTO LICHDAT (IdLichDat, IdTaiKhoan, TrangThai, ThoiDiemCapNhat) VALUES ($1, $2, $3, NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')`, [idLichDat, idTaiKhoan, 'Đã đặt']);
   await client.query(`INSERT INTO CHITIETLICHDAT (IdChiTietLD, IdHoSoBenhNhan, IdLichLamViec, IdLichDat, LiDoKham, GhiChu)
     VALUES ($1, $2, $3, $4, $5, $6)`, [idChiTietLD, targetId, IdLichLamViec, idLichDat, LiDoKham || null, GhiChu || null]);
   return { status: 201, body: { message: 'Đặt lịch khám thành công!', appointment: {
@@ -97,12 +127,13 @@ exports.updateAppointment = (req, res) => transaction(res, async client => {
   await validateSchedule(client, targetSchedule, req.params.id, sixHours);
   await client.query(`UPDATE CHITIETLICHDAT SET IdLichLamViec = $1, LiDoKham = $2, GhiChu = $3
     WHERE IdChiTietLD = $4`, [targetSchedule, LiDoKham ?? appointment.LiDoKham, GhiChu ?? appointment.GhiChu, req.params.id]);
+  await client.query("UPDATE LICHDAT SET ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat=$1",[appointment.IdLichDat]);
   return { body: { message: 'Cập nhật lịch khám thành công!' } };
 });
 
 exports.cancelAppointment = (req, res) => transaction(res, async client => {
   const appointment = await getEditableAppointment(client, req.params.id, req.user.IdTaiKhoan);
-  await client.query('UPDATE LICHDAT SET TrangThai = $1 WHERE IdLichDat = $2 AND IdTaiKhoan = $3',
+  await client.query(`UPDATE LICHDAT SET TrangThai = $1, ThoiDiemCapNhat=NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh' WHERE IdLichDat = $2 AND IdTaiKhoan = $3`,
     ['Đã hủy', appointment.IdLichDat, req.user.IdTaiKhoan]);
   return { body: { message: 'Hủy lịch khám thành công!' } };
 });

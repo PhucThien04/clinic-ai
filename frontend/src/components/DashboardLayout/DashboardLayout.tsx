@@ -1,123 +1,38 @@
-import React from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { authService } from "../../services/authService";
-import {
-  Activity,
-  LogOut,
-  HeartPulse,
-  Stethoscope,
-  Users,
-  Home,
-  Calendar,
-  FileText,
-} from "lucide-react";
+import {UserAvatar} from '../management/MediaImage';
+import {useCurrentUser} from '../../hooks/useCurrentUser';
+import type {ReactNode} from 'react';
+import {Link,Navigate,useNavigate,useLocation} from 'react-router-dom';
+import {Activity,LogOut,Home,Users,Calendar,FileText,HeartPulse,Stethoscope,Building2} from 'lucide-react';
+import {authService} from '../../services/authService';
+import {getActorNavigation} from '../../utils/managementConfig';
+import {NotificationBell} from '../notifications/NotificationBell';
 
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const currentUser = authService.getCurrentUser();
-
-  const handleLogout = () => {
-    authService.logout();
-    navigate("/login");
-  };
-  const isActive = (path: string) => location.pathname.startsWith(path);
-
-  if (!currentUser) {
-    navigate("/login");
-    return null;
-  }
-
-  const isNurse =
-    currentUser.VaiTro === "Y tá" ||
-    currentUser.VaiTro === "Admin" ||
-    currentUser.VaiTro === "Chủ phòng khám";
-  const isDoctor =
-    currentUser.VaiTro === "Bác sĩ" ||
-    currentUser.VaiTro === "Admin" ||
-    currentUser.VaiTro === "Chủ phòng khám";
-  const isPatient = currentUser.VaiTro === "Bệnh nhân";
-
-  return (
-    <div className="flex min-h-screen bg-slate-50">
-      <aside className="w-65 shrink-0 h-screen sticky top-0 bg-white [border-right:1px_solid_#e2e8f0] flex flex-col">
-        <div className="shrink-0 shrink-0 p-5 [border-bottom:1px_solid_#e2e8f0]">
-          <Link to="/" className="no-underline flex items-center gap-[10px]">
-            <div className="[background:linear-gradient(135deg,_#0284c7,_#0d9488)] p-[6px] rounded-[8px] flex">
-              <Activity color="white" size={20} />
-            </div>
-            <span className="font-extrabold text-[16px] text-slate-900">HỆ THỐNG Y TẾ</span>
-          </Link>
+const icons={calendar:Calendar,file:FileText,users:Users,clinic:Building2,nurse:HeartPulse,doctor:Stethoscope};
+export default function DashboardLayout({children}:{children:ReactNode}){
+  const navigate=useNavigate();const location=useLocation();const user=useCurrentUser();
+  if(!user)return <Navigate to="/login" replace/>;
+  const navigation=getActorNavigation(user.VaiTro);
+  return <div className="flex min-h-screen bg-slate-50">
+    <aside className="sticky top-0 flex h-screen w-65 shrink-0 flex-col border-r border-slate-200 bg-white">
+      <div className="shrink-0 border-b border-slate-200 p-5"><Link to="/" className="flex items-center gap-2.5 font-extrabold text-slate-900 no-underline"><Activity className="text-sky-600" size={26}/>HỆ THỐNG Y TẾ</Link></div>
+      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto p-5" aria-label="Không gian làm việc">
+        <Link to="/" className="flex items-center gap-3 rounded-lg px-3.5 py-2.5 font-semibold text-slate-500 no-underline hover:bg-slate-50"><Home size={18}/>Về trang chủ</Link>
+        {navigation.group&&<p className="pb-1 pt-5 text-[11px] font-bold uppercase tracking-wide text-slate-400">{navigation.group}</p>}
+        {navigation.items.map(item=>{
+          const Icon=icons[item.icon];
+          return <Link key={item.path} to={item.path} aria-current={location.pathname.startsWith(item.path)?'page':undefined}
+            className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold no-underline ${location.pathname.startsWith(item.path)?'bg-sky-100 text-sky-600':'text-slate-500 hover:bg-slate-50'}`}><Icon size={18}/>{item.label}</Link>;
+        })}
+      </nav>
+      <div className="shrink-0 border-t border-slate-200 bg-white p-5">
+        <div className="relative mb-3 flex items-center justify-between gap-2">
+        <Link to="/profile" className="flex min-w-0 flex-1 items-center gap-2.5 no-underline"><UserAvatar src={user.AnhDaiDien} name={user.HoTen}/>
+          <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{user.HoTen}</p><p className="text-xs text-slate-500">Xem hồ sơ cá nhân</p></div></Link>
+        <NotificationBell placement="sidebar"/>
         </div>
-
-        <nav className="p-5 flex flex-col gap-2 min-h-0 flex-1 overflow-y-auto">
-          <Link to="/" className="flex items-center gap-3 [padding:10px_14px] rounded-[8px] no-underline font-semibold text-slate-500 [background:transparent]">
-            <Home size={18} /> Về trang chủ
-          </Link>
-
-          {(isPatient || currentUser.VaiTro === "Admin") && (
-            <>
-              <div className="[margin:15px_0_5px_0] text-[11px] font-bold text-slate-400 uppercase [letter-spacing:0.5px]">Dịch vụ cá nhân</div>
-              <Link
-                to="/patient-appointments"
-                className={`flex items-center gap-3 [padding:10px_14px] rounded-[8px] no-underline font-semibold ${isActive("/patient-appointments") ? "text-sky-600 bg-sky-100" : "text-slate-500 [background:transparent]"}`}
-              >
-                <Calendar size={18} /> Đặt lịch khám
-              </Link>
-              <Link
-                to="/patient-history"
-                className={`flex items-center gap-3 [padding:10px_14px] rounded-[8px] no-underline font-semibold ${isActive("/patient-history") ? "text-sky-600 bg-sky-100" : "text-slate-500 [background:transparent]"}`}
-              >
-                <FileText size={18} /> Hồ sơ & Lịch sử
-              </Link>
-            </>
-          )}
-
-          {(isNurse || isDoctor) && (
-            <div className="[margin:15px_0_5px_0] text-[11px] font-bold text-slate-400 uppercase [letter-spacing:0.5px]">Nghiệp vụ lâm sàng</div>
-          )}
-
-          {isNurse && (
-            <Link
-              to="/nurse"
-              className={`flex items-center gap-3 [padding:10px_14px] rounded-[8px] no-underline font-semibold ${isActive("/nurse") ? "text-sky-600 bg-sky-100" : "text-slate-500 [background:transparent]"}`}
-            >
-              <HeartPulse size={18} /> Bàn làm việc Y tá
-            </Link>
-          )}
-
-          {isDoctor && (
-            <Link
-              to="/doctor"
-              className={`flex items-center gap-3 [padding:10px_14px] rounded-[8px] no-underline font-semibold ${isActive("/doctor") ? "text-teal-600 bg-teal-100" : "text-slate-500 [background:transparent]"}`}
-            >
-              <Stethoscope size={18} /> Phòng khám Bác sĩ
-            </Link>
-          )}
-        </nav>
-
-        <div className="shrink-0 shrink-0 p-5 [border-top:1px_solid_#e2e8f0] bg-white">
-          <Link to="/profile" className="flex items-center gap-[10px] mb-[15px] no-underline">
-            <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center">
-              <Users size={18} color="#0284c7" />
-            </div>
-            <div>
-              <div className="text-[13px] font-bold text-slate-800">{currentUser?.HoTen}</div>
-              <div className="text-[12px] text-slate-500">Xem hồ sơ cá nhân</div>
-            </div>
-          </Link>
-          <button onClick={handleLogout} className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[14px] font-semibold no-underline cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 w-full bg-red-100 text-red-500 p-2 text-[13px]">
-            <LogOut size={16} /> Đăng xuất
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 min-w-0 [padding:30px_40px]">{children}</main>
-    </div>
-  );
+        <button type="button" onClick={()=>{authService.logout();navigate('/login');}} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-50 p-2.5 text-sm font-semibold text-red-500"><LogOut size={16}/>Đăng xuất</button>
+      </div>
+    </aside>
+    <main className="min-w-0 flex-1 p-6 xl:px-10 xl:py-8">{children}</main>
+  </div>;
 }

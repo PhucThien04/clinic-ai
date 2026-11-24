@@ -1,111 +1,11 @@
-import React, { useState, useEffect } from "react";
-import API from "../../services/api";
+import type React from "react";
+import {useProfile} from "../../hooks/useProfile";
+import {AvatarManagerModal} from "../../components/management/AvatarManagerModal";
+import {UserAvatar} from "../../components/management/MediaImage";
 import DashboardLayout from "../../components/DashboardLayout/DashboardLayout";
-import { User, Save, AlertCircle, CheckCircle2 } from "lucide-react";
-
-interface UserProfile {
-  IdTaiKhoan: string;
-  TenTaiKhoan: string;
-  HoTen: string;
-  CCCD: string;
-  NgaySinh: string | null;
-  GioiTinh: string | null;
-  Email: string | null;
-  SoDienThoai: string;
-  DiaChi: string | null;
-  VaiTro: string;
-}
-
+import {Save, AlertCircle, CheckCircle2,Camera} from "lucide-react";
 export default function Profile(): React.JSX.Element {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [status, setStatus] = useState<{
-    type: "success" | "error" | "";
-    msg: string;
-  }>({ type: "", msg: "" });
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const res = await API.get("/profile");
-
-      // Xử lý map dữ liệu chữ thường/PascalCase từ PostgreSQL
-      const rawData = res.data;
-      const normalizedProfile: UserProfile = {
-        IdTaiKhoan: rawData.IdTaiKhoan || rawData.idtaikhoan,
-        TenTaiKhoan: rawData.TenTaiKhoan || rawData.tentaikhoan,
-        HoTen: rawData.HoTen || rawData.hoten,
-        CCCD: rawData.CCCD || rawData.cccd,
-        NgaySinh:
-          rawData.NgaySinh || rawData.ngaysinh
-            ? new Date(rawData.NgaySinh || rawData.ngaysinh)
-                .toISOString()
-                .split("T")[0]
-            : "", // Chuyển đổi để hiển thị trên input type="date"
-        GioiTinh: rawData.GioiTinh || rawData.gioitinh || "",
-        Email: rawData.Email || rawData.email || "",
-        SoDienThoai: rawData.SoDienThoai || rawData.sodienthoai,
-        DiaChi: rawData.DiaChi || rawData.diachi || "",
-        VaiTro: rawData.VaiTro || rawData.vaitro,
-      };
-
-      setProfile(normalizedProfile);
-    } catch (err: any) {
-      setStatus({ type: "error", msg: "Lỗi khi tải thông tin cá nhân." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    if (profile) {
-      setProfile({ ...profile, [e.target.name]: e.target.value });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profile) return;
-
-    setStatus({ type: "", msg: "" });
-    setSaving(true);
-
-    try {
-      const res = await API.put("/profile", {
-        HoTen: profile.HoTen,
-        NgaySinh: profile.NgaySinh || null,
-        GioiTinh: profile.GioiTinh || null,
-        Email: profile.Email || null,
-        SoDienThoai: profile.SoDienThoai,
-        DiaChi: profile.DiaChi || null,
-      });
-
-      setStatus({ type: "success", msg: res.data.message });
-
-      // Cập nhật lại thông tin lưu trên localStorage để Header/Sidebar hiển thị đúng
-      const userStr = sessionStorage.getItem("user");
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        userData.HoTen = profile.HoTen;
-        sessionStorage.setItem("user", JSON.stringify(userData));
-      }
-    } catch (err: any) {
-      setStatus({
-        type: "error",
-        msg: err.response?.data?.error || "Lỗi khi cập nhật thông tin cá nhân.",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
+  const {profile,loading,saving,status,handleChange,handleSubmit,avatarOpen,setAvatarOpen,avatarSaved}=useProfile();
   return (
     <DashboardLayout>
       <div  className="max-w-175! mx-auto! my-0!">
@@ -127,11 +27,10 @@ export default function Profile(): React.JSX.Element {
             <div
                className="flex! items-center! gap-4! mb-[30px]! [border-bottom:1px_solid_#e2e8f0]! pb-5!"
             >
-              <div
-                 className="w-16! h-16! bg-sky-100! rounded-full! flex! items-center! justify-center!"
-              >
-                <User size={32} color="#0284c7" />
-              </div>
+              <button type="button" disabled={saving} title="Chỉnh sửa ảnh đại diện" aria-label="Chỉnh sửa ảnh đại diện" onClick={()=>setAvatarOpen(true)} className="group relative shrink-0 rounded-full focus:ring-2 focus:ring-sky-600">
+                <UserAvatar src={profile.AnhDaiDien} name={profile.HoTen} className="h-16 w-16"/>
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-900/50 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"><Camera size={22}/></span>
+              </button>
               <div>
                 <h2  className="text-[20px]! text-slate-900! m-0!">
                   {profile.HoTen}
@@ -163,7 +62,6 @@ export default function Profile(): React.JSX.Element {
               onSubmit={handleSubmit}
                className="flex! flex-col! gap-5!"
             >
-              {/* Các trường Không cho phép sửa */}
               <div
                  className="grid! grid-cols-[1fr_1fr]! gap-5!"
               >
@@ -326,6 +224,7 @@ export default function Profile(): React.JSX.Element {
           </div>
         )}
       </div>
+      {profile&&avatarOpen&&<AvatarManagerModal currentUrl={profile.AnhDaiDien} onSaved={avatarSaved} onClose={()=>setAvatarOpen(false)}/>}
     </DashboardLayout>
   );
 }

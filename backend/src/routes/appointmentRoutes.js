@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const appointmentController = require('../controllers/appointmentController');
-const { verifyToken } = require('../middlewares/authMiddleware');
+const { verifyToken, requireRoles } = require('../middlewares/authMiddleware');
 const { scopeAccount, ownsResource } = require('../middlewares/patientOwnership');
 
-router.use(verifyToken, scopeAccount);
+router.use(verifyToken);
+const manage = requireRoles('Nhân viên', 'Admin', 'Chủ phòng khám');
+router.get('/manage', manage, appointmentController.getManagedAppointments);
+router.put('/:id/status', manage, appointmentController.updateAppointmentStatus);
+router.use(scopeAccount);
 
 // GET /api/appointments/all - Lấy tất cả lịch đặt (để kiểm tra ca kín chỗ)
 router.get('/all', appointmentController.getAllAppointments);

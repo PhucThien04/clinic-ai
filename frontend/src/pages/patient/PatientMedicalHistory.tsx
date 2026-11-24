@@ -1,3 +1,4 @@
+import type {PatientProfile} from '../../hooks/usePatientHistory';
 import React, { useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout/DashboardLayout";
 import {
@@ -81,7 +82,7 @@ export default function PatientMedicalHistory(): React.JSX.Element {
     setIsModalOpen(true);
   };
 
-  const handleOpenEditRelative = (profile: any) => {
+  const handleOpenEditRelative = (profile: PatientProfile) => {
     setIsEditingRelative(true);
     setErrorMsg("");
     setSelectedRelativeId(

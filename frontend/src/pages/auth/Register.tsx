@@ -1,3 +1,4 @@
+import {getApiErrorMessage} from '../../utils/apiErrors';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService, type RegisterData } from '../../services/authService';
@@ -38,8 +39,8 @@ export default function Register(): React.JSX.Element {
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-    } catch (err: any) {
-      setStatus({ type: 'error', msg: err.response?.data?.error || 'Lỗi khi đăng ký tài khoản!' });
+    } catch (err: unknown) {
+      setStatus({ type: 'error', msg: getApiErrorMessage(err,'Lỗi khi đăng ký tài khoản!') });
     } finally {
       setLoading(false);
     }

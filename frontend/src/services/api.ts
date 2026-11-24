@@ -19,3 +19,8 @@ API.interceptors.request.use((config) => {
 });
 
 export default API;
+// Mọi ghi dữ liệu thành công đều thông báo cho chuông tải lại, không đặt API vào Component.
+API.interceptors.response.use(response=>{
+  if(['post','put','patch','delete'].includes(response.config.method?.toLowerCase()||''))window.dispatchEvent(new Event('notifications-changed'));
+  return response;
+});

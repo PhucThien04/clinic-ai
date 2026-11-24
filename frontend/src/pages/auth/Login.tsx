@@ -1,3 +1,4 @@
+import {getApiErrorMessage} from '../../utils/apiErrors';
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "../../services/authService";
@@ -24,10 +25,9 @@ export default function Login(): React.JSX.Element {
     try {
       await authService.login(credentials);
       navigate("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.response?.data?.error ||
-          "Tên tài khoản hoặc mật khẩu không chính xác!",
+        getApiErrorMessage(err,"Tên tài khoản hoặc mật khẩu không chính xác!"),
       );
     } finally {
       setLoading(false);

@@ -1,3 +1,4 @@
+import {MediaImage} from '../../../components/management/MediaImage';
 import React from "react";
 import { useClinic } from "../../../hooks/useClinic";
 import { Stethoscope, ArrowRight } from "lucide-react";
@@ -45,9 +46,7 @@ export default function ServicesPage(): React.JSX.Element {
               className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between p-5 bg-white rounded-[12px] [border:1px_solid_#e2e8f0]"
             >
               <div>
-                <div className="w-12 h-12 [background:linear-gradient(135deg,_#e0f2fe_0%,_#ccfbf1_100%)] rounded-[12px] flex items-center justify-center mb-4">
-                  <Stethoscope size={24} color="#0284c7" />
-                </div>
+                <MediaImage src={service.HinhAnh} alt={service.TenDichVu} className={service.HinhAnh?"mb-4 h-32 w-full rounded-lg":"mb-4 h-12 w-12 rounded-lg"} fallback={<Stethoscope size={24} color="#0284c7"/>}/>
                 <h3 className="text-[18px] text-slate-900 mb-2">{service.TenDichVu}</h3>
                 <p className="text-slate-500 text-[14px] leading-[1.6] mb-4">{service.MoTa}</p>
               </div>

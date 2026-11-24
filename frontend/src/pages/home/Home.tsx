@@ -1,3 +1,5 @@
+import {PublicEventCard} from '../../components/management/PublicEventCard';
+import {MediaImage} from '../../components/management/MediaImage';
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useClinic } from "../../hooks/useClinic";
@@ -130,23 +132,7 @@ export default function Home(): React.JSX.Element {
                 start && end ? `Từ ${start} đến ${end}` : "Đang diễn ra";
 
               return (
-                <div key={ev.IdSuKien || index} className="[background:linear-gradient(90deg,_#f0f9ff_0%,_#ffffff_100%)] [border-left:6px_solid_#0284c7] [padding:20px_24px] rounded-[12px] flex justify-between items-center gap-5 [box-shadow:0_2px_4px_rgba(0,_0,_0,_0.04)] [transition:all_0.2s_ease] [&:hover]:[box-shadow:0_5px_12px_rgba(2,_132,_199,_0.1)] [&:hover]:[transform:translateY(-2px)] max-[900.01px]:items-start max-[640.01px]:flex-col max-[640.01px]:items-stretch max-[640.01px]:p-[18px]">
-                  <div>
-                    <span className="inline-flex items-center gap-[6px] bg-sky-600 text-white text-[12px] font-bold [padding:4px_12px] rounded-[20px] mb-2">
-                      <Clock size={12} /> {timeDisplay}
-                    </span>
-                    <h3 className="text-[18px] text-sky-700 [margin:4px_0_6px] leading-[1.3]!">{ev.TieuDe}</h3>
-                    <p className="text-slate-600 text-[14px] leading-[1.5] m-0">{ev.NoiDung}</p>
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleNavigation(`Tham gia sự kiện: ${ev.TieuDe}`)
-                    }
-                    className="[padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700 [white-space:nowrap] cursor-pointer bg-sky-600 text-white [border:none] [padding:10px_16px] rounded-[6px] font-semibold [transition:all_0.2s_ease] [&:hover]:bg-sky-700 max-[640.01px]:w-full"
-                  >
-                    Nhận ưu đãi ngay
-                  </button>
-                </div>
+                <PublicEventCard key={ev.IdSuKien || index} event={ev} timeLabel={timeDisplay} actionLabel="Nhận ưu đãi ngay" onAction={()=>handleNavigation(`Tham gia sự kiện: ${ev.TieuDe}`)}/>
               );
             })}
           </div>
@@ -182,13 +168,11 @@ export default function Home(): React.JSX.Element {
             </button>
           )}
 
-          <div className="grid grid-cols-[repeat(4,_minmax(0,_1fr))] auto-rows-[342px] gap-5 items-stretch max-[1024.01px]:grid-cols-[repeat(2,_minmax(0,_1fr))] max-[640.01px]:grid-cols-[1fr] max-[640.01px]:auto-rows-[342px]">
+          <div className="grid grid-cols-[repeat(4,_minmax(0,_1fr))] auto-rows-auto gap-5 items-stretch max-[1024.01px]:grid-cols-[repeat(2,_minmax(0,_1fr))] max-[640.01px]:grid-cols-[1fr] max-[640.01px]:auto-rows-auto">
             {visibleServices.map((service, index) => (
-              <div key={service.IdDichVu || index} className="flex flex-col justify-between w-full h-[342px] min-h-[342px] min-w-0 p-5 box-border bg-white rounded-[12px] [border:1px_solid_#e2e8f0] [box-shadow:0_4px_6px_-1px_rgba(0,_0,_0,_0.08)] [transition:all_0.2s_ease] [&:hover]:[transform:translateY(-3px)] [&:hover]:[box-shadow:0_8px_15px_rgba(2,_132,_199,_0.12)] max-[640.01px]:h-[342px] max-[640.01px]:min-h-[342px]">
+              <div key={service.IdDichVu || index} className="flex flex-col justify-between w-full h-full min-h-[342px] min-w-0 p-5 box-border bg-white rounded-[12px] [border:1px_solid_#e2e8f0] [box-shadow:0_4px_6px_-1px_rgba(0,_0,_0,_0.08)] [transition:all_0.2s_ease] [&:hover]:[transform:translateY(-3px)] [&:hover]:[box-shadow:0_8px_15px_rgba(2,_132,_199,_0.12)] max-[640.01px]:h-full max-[640.01px]:min-h-[342px]">
                 <div>
-                  <div className="w-12 h-12 shrink-0 bg-sky-100 rounded-[10px] flex items-center justify-center mb-4">
-                    <Stethoscope size={24} color="#0284c7" />
-                  </div>
+                  <MediaImage src={service.HinhAnh} alt={service.TenDichVu} className={service.HinhAnh?"mb-4 h-32 w-full rounded-lg":"mb-4 h-12 w-12 rounded-lg"} fallback={<Stethoscope size={24} color="#0284c7"/>}/>
                   <h3 className="text-[18px] text-slate-900 [margin:0_0_8px] leading-[1.35]">{service.TenDichVu}</h3>
                   <p className="text-slate-500 text-[14px] [margin:0_0_16px] leading-[1.5]">{service.MoTa}</p>
                 </div>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import {getApiErrorMessage} from '../utils/apiErrors';
+import { useState, useEffect, useCallback } from "react";
 import { authService } from "../services/authService";
-import API from "../services/api";
 import { patientService } from "../services/patientService";
 import { getProfileDeletionErrorMessage } from "../utils/patientActionErrors";
 
@@ -27,7 +27,7 @@ export interface ChronicDiseaseRecord {
   TenNguoiGhiNhan?: string;
 }
 
-export interface MedicalHistoryRecord {
+interface MedicalHistoryRecord {
   IdLichDat: string;
   IdChiTietLD: string;
   NgayKham: string;
@@ -53,31 +53,28 @@ export function usePatientHistory() {
   const [loading, setLoading] = useState(false);
   const currentUser = authService.getCurrentUser();
 
-  const fetchProfiles = async () => {
-    if (!currentUser) return;
+  const currentUserId=currentUser?.IdTaiKhoan as string|undefined;
+  const fetchProfiles = useCallback(async () => {
+    if (!currentUserId) return;
     try {
       setLoading(true);
-      const res = await API.get(
-        `/patients/profiles?idTaiKhoan=${currentUser.IdTaiKhoan}`,
-      );
+      const res = await patientService.getProfiles();
       setProfiles(res.data || []);
-      if (res.data?.length > 0 && !selectedProfileId) {
-        setSelectedProfileId(res.data[0].IdHoSoBenhNhan);
-      }
+      setSelectedProfileId(previous=>previous||res.data?.[0]?.IdHoSoBenhNhan||'');
     } catch (error) {
       console.error("Lỗi tải hồ sơ:", error);
     } finally {
       setLoading(false);
     }
-  };
+  },[currentUserId]);
 
-  const fetchProfileDetails = async (profileId: string) => {
+  const fetchProfileDetails = useCallback(async (profileId: string) => {
     if (!profileId) return;
     try {
       setLoading(true);
       const [resChronic, resExams] = await Promise.all([
-        API.get(`/patients/histories?idHoSoBenhNhan=${profileId}`),
-        API.get(`/patients/exam-histories?idHoSoBenhNhan=${profileId}`).catch(
+        patientService.getHistories(profileId),
+        patientService.getExamHistories(profileId).catch(
           () => ({ data: [] }),
         ),
       ]);
@@ -88,38 +85,38 @@ export function usePatientHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  },[]);
 
   // Thêm người thân
-  const addRelativeProfile = async (relativeData: any) => {
+  const addRelativeProfile = async (relativeData: Partial<PatientProfile>) => {
     if (!currentUser) return { success: false, error: "Chưa đăng nhập" };
     try {
-      await API.post("/patients/profiles", {
+      await patientService.createRelative({
         IdTaiKhoan: currentUser.IdTaiKhoan,
         LoaiThongTin: 1,
         NguoiThan: relativeData,
       });
       await fetchProfiles();
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.error || "Lỗi khi thêm hồ sơ người thân",
+        error: getApiErrorMessage(error,"Lỗi khi thêm hồ sơ người thân"),
       };
     }
   };
 
   // Cập nhật người thân
-  const updateRelativeProfile = async (relativeData: any) => {
+  const updateRelativeProfile = async (relativeData: Partial<PatientProfile>) => {
     try {
-      await API.put("/patients/relatives", relativeData);
+      await patientService.updateRelative(relativeData);
       await fetchProfiles();
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
         error:
-          error.response?.data?.error || "Lỗi khi cập nhật hồ sơ người thân",
+          getApiErrorMessage(error,"Lỗi khi cập nhật hồ sơ người thân"),
       };
     }
   };
@@ -151,7 +148,7 @@ export function usePatientHistory() {
     if (!selectedProfileId || !currentUser)
       return { success: false, error: "Thiếu thông tin" };
     try {
-      await API.post("/patients/histories", {
+      await patientService.createHistory({
         IdHoSoBenhNhan: selectedProfileId,
         IdChiTietLD: null,
         NguoiGhiNhan: currentUser.IdTaiKhoan,
@@ -159,10 +156,10 @@ export function usePatientHistory() {
       });
       await fetchProfileDetails(selectedProfileId);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.error || "Lỗi khi thêm bệnh nền",
+        error: getApiErrorMessage(error,"Lỗi khi thêm bệnh nền"),
       };
     }
   };
@@ -178,13 +175,13 @@ export function usePatientHistory() {
     },
   ) => {
     try {
-      await API.put(`/patients/histories/${idTienSu}`, historyData);
+      await patientService.updateHistory(idTienSu,historyData);
       await fetchProfileDetails(selectedProfileId);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.error || "Lỗi khi cập nhật bệnh nền",
+        error: getApiErrorMessage(error,"Lỗi khi cập nhật bệnh nền"),
       };
     }
   };
@@ -192,26 +189,24 @@ export function usePatientHistory() {
   // Xóa tiền sử bệnh
   const deleteMedicalHistory = async (idTienSu: string) => {
     try {
-      await API.delete(`/patients/histories/${idTienSu}`);
+      await patientService.deleteHistory(idTienSu);
       await fetchProfileDetails(selectedProfileId);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.error || "Lỗi khi xóa bệnh nền",
+        error: getApiErrorMessage(error,"Lỗi khi xóa bệnh nền"),
       };
     }
   };
 
   useEffect(() => {
-    fetchProfiles();
-  }, []);
+    let active=true;queueMicrotask(()=>{if(active)void fetchProfiles();});return()=>{active=false;};
+  }, [fetchProfiles]);
 
   useEffect(() => {
-    if (selectedProfileId) {
-      fetchProfileDetails(selectedProfileId);
-    }
-  }, [selectedProfileId]);
+    let active=true;queueMicrotask(()=>{if(active&&selectedProfileId)void fetchProfileDetails(selectedProfileId);});return()=>{active=false;};
+  }, [selectedProfileId,fetchProfileDetails]);
 
   return {
     profiles,
