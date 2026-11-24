@@ -1,257 +1,83 @@
+import {Link} from 'react-router-dom';
+import {ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock, Heart, MapPin, PhoneCall, Stethoscope, Tag} from 'lucide-react';
 import {PublicEventCard} from '../../components/management/PublicEventCard';
 import {MediaImage} from '../../components/management/MediaImage';
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useClinic } from "../../hooks/useClinic";
-import { authService } from "../../services/authService";
-import { formatDateTime } from "../../utils/dateUtils";
-import {
-  Sparkles,
-  Clock,
-  MapPin,
-  Stethoscope,
-  ArrowRight,
-  Tag,
-  Shield,
-  Award,
-  PhoneCall,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import {useHome} from '../../hooks/useHome';
+import {formatDateTime} from '../../utils/dateUtils';
+import {formatServicePrice, getClinicDisplay} from '../../utils/clinicDisplay';
 
+const careSteps = [
+  {title: 'Đặt lịch trực tuyến chủ động', description: 'Chọn dịch vụ, khung giờ và hồ sơ của bạn hoặc người thân để gửi yêu cầu đặt lịch.', icon: CalendarDays},
+  {title: 'Thăm khám & Tư vấn chuyên sâu', description: 'Trao đổi nhu cầu, thăm khám trực tiếp và cùng bác sĩ tìm hướng chăm sóc phù hợp.', icon: Stethoscope},
+  {title: 'Theo dõi hồ sơ & Lịch sử điều trị', description: 'Xem lại thông tin các lượt khám và chủ động theo dõi quá trình chăm sóc răng miệng.', icon: ClipboardList},
+];
 
-export default function Home(): React.JSX.Element {
-  const { services, events, loading } = useClinic();
-  const [serviceIndex, setServiceIndex] = useState<number>(0);
-  const navigate = useNavigate();
-  const currentUser = authService.getCurrentUser();
-
-  const ITEMS_PER_SLIDE = 4;
-  const totalSlides = Math.ceil(services.length / ITEMS_PER_SLIDE) || 1;
-  const visibleServices = services.slice(
-    serviceIndex * ITEMS_PER_SLIDE,
-    (serviceIndex + 1) * ITEMS_PER_SLIDE,
-  );
-
-  const handleNextService = () => {
-    setServiceIndex((prev) => (prev + 1) % totalSlides);
-  };
-
-  const handlePrevService = () => {
-    setServiceIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
-  };
-
-  const handleNavigation = (defaultReason: string) => {
-    if (!currentUser) {
-      navigate("/login");
-    } else {
-      navigate("/patient-appointments", { state: { defaultReason } });
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-[50px] w-full box-border [&_*]:box-border max-[640.01px]:gap-[35px]">
-      {/* 1. Hero Banner */}
-      <section className="[padding:50px_30px] [background:linear-gradient(135deg,_#0284c7_0%,_#0d9488_100%)] rounded-[24px] text-white [box-shadow:0_20px_25px_-5px_rgba(2,_132,_199,_0.25)] grid grid-cols-[1.2fr_0.8fr] gap-[30px] items-center max-[1024.01px]:grid-cols-[1fr_0.8fr] max-[1024.01px]:[padding:40px_24px] max-[900.01px]:grid-cols-[1fr] max-[640.01px]:[padding:30px_20px] max-[640.01px]:rounded-[16px]">
-        <div>
-          <div className="inline-flex items-center gap-2 [background:rgba(255,_255,_255,_0.2)] [padding:6px_16px] rounded-[30px] text-[13px] font-semibold mb-5 max-[400.01px]:text-[11px]">
-            <Sparkles size={16} /> Phòng Khám Nha Khoa Chuẩn Quốc Tế & AI Cảnh
-            Báo Lâm Sàng
-          </div>
-
-          <h1 className="text-[38px] text-white! [margin:0_0_16px] font-extrabold leading-[1.2]! max-[1024.01px]:text-[32px] max-[640.01px]:text-[28px] max-[400.01px]:text-[24px]">
-            Nụ Cười Rạng Rỡ — Khởi Đầu Cho Cuộc Sống Hạnh Phúc
-          </h1>
-
-          <p className="text-[16px] text-sky-100 mb-[30px] leading-[1.6]">
-            Nha khoa Đức Tín tiên phong ứng dụng công nghệ hiện đại và Trợ lý AI
-            hỗ trợ theo dõi hồ sơ bệnh án toàn diện, mang lại giải pháp chăm sóc
-            răng miệng an toàn, nhẹ nhàng và chính xác.
-          </p>
-
-          <div className="flex items-center gap-4 flex-wrap max-[640.01px]:flex-col max-[640.01px]:items-stretch">
-            <button
-              onClick={() => handleNavigation("Đăng ký khám tổng quát")}
-              className="bg-white text-sky-600 [padding:14px_28px] text-[15px] font-bold cursor-pointer [border:none] rounded-[8px] inline-flex items-center justify-center gap-2 [transition:all_0.2s_ease] [&:hover]:bg-sky-100 [&:hover]:[transform:translateY(-2px)] max-[640.01px]:w-full"
-            >
-              <PhoneCall size={18} /> Đặt Lịch Khám Ngay
-            </button>
-            <Link to="/dich-vu" className="[background:rgba(255,_255,_255,_0.15)] text-white [padding:14px_24px] text-[15px] no-underline rounded-[8px] inline-flex items-center justify-center gap-2 [transition:all_0.2s_ease] [&:hover]:[background:rgba(255,_255,_255,_0.25)] [&:hover]:[transform:translateY(-2px)] max-[640.01px]:w-full">
-              Xem Dịch Vụ <ArrowRight size={18} />
-            </Link>
+export default function Home() {
+  const home = useHome();
+  const clinic = getClinicDisplay(home.clinicInfo);
+  return <div className="space-y-14 sm:space-y-16">
+    <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-sky-600 to-teal-600 px-6 py-10 text-white shadow-xl shadow-sky-600/15 sm:p-10 lg:p-12">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-32 h-96 w-96 rounded-full border-40 border-white/5"/>
+      <div className="relative grid items-center gap-10 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold"><Heart size={15}/>Chăm sóc nụ cười, đồng hành cùng bạn</span>
+          <p className="mb-3 text-sm font-semibold tracking-wide text-sky-100">{clinic.name}</p>
+          <h1 className="max-w-2xl text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">Nụ cười khỏe mạnh.<br/>An tâm mỗi lần thăm khám.</h1>
+          <p className="mt-5 max-w-xl text-base leading-7 text-sky-50">Chủ động đặt lịch cho bạn và người thân, tìm hiểu dịch vụ phù hợp và theo dõi hồ sơ khám trong một không gian thuận tiện.</p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            {home.canBook && <button type="button" onClick={() => home.handleBooking()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-bold text-sky-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-sky-50"><CalendarDays size={19}/>Đặt lịch khám ngay</button>}
+            <Link to="/dich-vu" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20">Khám phá dịch vụ<ArrowRight size={18}/></Link>
           </div>
         </div>
-
-        {/* Card Thống kê nhanh */}
-        <div className="[background:rgba(255,_255,_255,_0.1)] [backdrop-filter:blur(10px)] p-6 rounded-[16px] [border:1px_solid_rgba(255,_255,_255,_0.2)] flex flex-col gap-5 max-[640.01px]:p-[18px]">
-          <div className="flex items-center gap-3">
-            <div className="bg-white p-[10px] rounded-[12px] flex">
-              <PhoneCall size={24} color="#0284c7" />
-            </div>
-            <div>
-              <div className="text-[12px] text-sky-100">Tư vấn nhanh miễn phí</div>
-              <div className="text-[20px] font-extrabold">0236 388 888</div>
-            </div>
-          </div>
-
-          <div className="[border-top:1px_solid_rgba(255,_255,_255,_0.2)] pt-[15px] grid grid-cols-[1fr_1fr] gap-3 text-[13px] max-[400.01px]:grid-cols-[1fr]">
-            <div className="flex items-center gap-[6px]">
-              <Clock size={16} /> 08:00 - 20:00
-            </div>
-            <div className="flex items-center gap-[6px]">
-              <Award size={16} /> Bác sĩ chuyên khoa
-            </div>
-            <div className="flex items-center gap-[6px]">
-              <Shield size={16} /> Vô trùng tuyệt đối
-            </div>
-            <div className="flex items-center gap-[6px]">
-              <Sparkles size={16} /> AI Hỗ trợ chẩn đoán
-            </div>
+        <div className="rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm lg:col-span-2">
+          <div className="mb-6 flex items-center gap-3"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-sky-600"><PhoneCall size={23}/></span><div className="min-w-0"><p className="text-sm text-sky-100">Liên hệ phòng khám</p><a href={`tel:${clinic.phone}`} className="break-words text-2xl font-bold text-white">{clinic.phone}</a></div></div>
+          <div className="space-y-4 border-t border-white/20 pt-5 text-sm">
+            <p className="flex items-start gap-3"><Clock size={18} className="shrink-0"/><span><span className="block text-sky-100">Giờ làm việc</span><strong className="mt-1 block text-base">{clinic.hours}</strong></span></p>
+            <p className="flex items-start gap-3 leading-6"><MapPin size={18} className="mt-1 shrink-0"/>{clinic.address}</p>
+            <p className="rounded-xl bg-white/10 p-3 leading-6 text-sky-50">Đặt lịch trước để phòng khám sắp xếp thời gian tiếp đón và tư vấn cho bạn.</p>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      {/* 2. Sự Kiện & Ưu Đãi */}
-      {events.length > 0 && (
-        <section>
-          <div className="flex justify-between items-end gap-5 mb-6 max-[900.01px]:flex-col max-[900.01px]:items-start max-[900.01px]:gap-3">
-            <div className="flex items-center gap-[10px]">
-              <Tag color="#0284c7" size={24} />
-              <h2 className="text-[24px] text-slate-900 m-0 max-[640.01px]:text-[20px]">Chương Trình Ưu Đãi & Sự Kiện</h2>
-            </div>
-            <Link to="/su-kien" className="border border-slate-300 bg-white text-slate-900 hover:border-sky-600 hover:bg-sky-50 hover:text-sky-600 text-[13px] inline-flex items-center justify-center gap-[6px] no-underline [padding:8px_16px] rounded-[6px] [white-space:nowrap] [transition:all_0.2s_ease] max-[640.01px]:[white-space:normal]">
-              Xem tất cả sự kiện ({events.length}) <ArrowRight size={14} />
-            </Link>
-          </div>
+    {home.error && <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{home.error} Bạn vẫn có thể liên hệ phòng khám để được hỗ trợ.</p>}
 
-          <div className="flex flex-col gap-4">
-            {events.slice(0, 3).map((ev, index) => {
-              const start = formatDateTime(ev.ThoiGianBatDau);
-              const end = formatDateTime(ev.ThoiGianKetThuc);
-              const timeDisplay =
-                start && end ? `Từ ${start} đến ${end}` : "Đang diễn ra";
-
-              return (
-                <PublicEventCard key={ev.IdSuKien || index} event={ev} timeLabel={timeDisplay} actionLabel="Nhận ưu đãi ngay" onAction={()=>handleNavigation(`Tham gia sự kiện: ${ev.TieuDe}`)}/>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* 3. Carousel Dịch Vụ */}
-      <section>
-        <div className="flex justify-between items-end gap-5 mb-6 max-[900.01px]:flex-col max-[900.01px]:items-start max-[900.01px]:gap-3">
-          <div>
-            <h2 className="text-[28px] text-slate-900 [margin:0_0_6px] text-left max-[640.01px]:text-[24px]">
-              Dịch Vụ Nha Khoa Chuyên Sâu
-            </h2>
-            <p className="text-slate-500 text-[15px] text-left m-0">
-              {loading
-                ? "Đang tải danh mục dịch vụ..."
-                : "Đội ngũ bác sĩ nhiều năm kinh nghiệm cùng hệ thống thiết bị đạt chuẩn Y tế"}
-            </p>
-          </div>
-          <Link to="/dich-vu" className="bg-sky-600 border border-sky-600 text-white cursor-pointer font-medium hover:bg-sky-700 text-[13px] inline-flex items-center justify-center gap-[6px] no-underline [padding:8px_16px] rounded-[6px] [white-space:nowrap] [transition:all_0.2s_ease] max-[640.01px]:[white-space:normal]">
-            Xem tất cả dịch vụ ({services.length}) <ArrowRight size={14} />
-          </Link>
-        </div>
-
-        <div className="relative w-full [padding:0_60px] box-border max-[640.01px]:[padding:0_40px]">
-          {totalSlides > 1 && (
-            <button
-              onClick={handlePrevService}
-              className="absolute [top:50%] [transform:translateY(-50%)] [z-index:10] w-12 h-12 shrink-0 rounded-full flex items-center justify-center bg-white [border:1px_solid_#cbd5e1] text-sky-600 cursor-pointer [box-shadow:0_4px_6px_-1px_rgba(0,_0,_0,_0.1)] [transition:all_0.2s_ease] [&:hover:not(:disabled)]:bg-sky-600 [&:hover:not(:disabled)]:text-white [&:hover:not(:disabled)]:border-sky-600 [&:hover:not(:disabled)]:[transform:translateY(-50%)_scale(1.08)] [&:disabled]:[opacity:0.25] [&:disabled]:cursor-not-allowed [&:disabled]:[box-shadow:none] max-[640.01px]:w-9 max-[640.01px]:h-9 [left:0]"
-              title="Dịch vụ trước"
-            >
-              <ChevronLeft size={22} />
-            </button>
-          )}
-
-          <div className="grid grid-cols-[repeat(4,_minmax(0,_1fr))] auto-rows-auto gap-5 items-stretch max-[1024.01px]:grid-cols-[repeat(2,_minmax(0,_1fr))] max-[640.01px]:grid-cols-[1fr] max-[640.01px]:auto-rows-auto">
-            {visibleServices.map((service, index) => (
-              <div key={service.IdDichVu || index} className="flex flex-col justify-between w-full h-full min-h-[342px] min-w-0 p-5 box-border bg-white rounded-[12px] [border:1px_solid_#e2e8f0] [box-shadow:0_4px_6px_-1px_rgba(0,_0,_0,_0.08)] [transition:all_0.2s_ease] [&:hover]:[transform:translateY(-3px)] [&:hover]:[box-shadow:0_8px_15px_rgba(2,_132,_199,_0.12)] max-[640.01px]:h-full max-[640.01px]:min-h-[342px]">
-                <div>
-                  <MediaImage src={service.HinhAnh} alt={service.TenDichVu} className={service.HinhAnh?"mb-4 h-32 w-full rounded-lg":"mb-4 h-12 w-12 rounded-lg"} fallback={<Stethoscope size={24} color="#0284c7"/>}/>
-                  <h3 className="text-[18px] text-slate-900 [margin:0_0_8px] leading-[1.35]">{service.TenDichVu}</h3>
-                  <p className="text-slate-500 text-[14px] [margin:0_0_16px] leading-[1.5]">{service.MoTa}</p>
-                </div>
-                <div className="[border-top:1px_solid_#f1f5f9] pt-3 flex flex-col gap-[10px]">
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-[13px] text-slate-500 [white-space:nowrap]">Chi phí từ:</span>
-                    <span className="text-[16px] font-extrabold text-teal-600 text-right max-[400.01px]:text-[14px]">
-                      {Number(service.Gia || 0).toLocaleString("vi-VN")} VNĐ
-                    </span>
-                  </div>
-                  <button
-                    onClick={() =>
-                      handleNavigation(`Đăng ký dịch vụ: ${service.TenDichVu}`)
-                    }
-                    className="[padding:10px_20px] bg-sky-600 [border:none] text-white rounded-[8px] cursor-pointer font-medium [&:hover]:bg-sky-700 w-full [padding:9px_8px] bg-sky-600 text-white [border:none] rounded-[6px] font-semibold cursor-pointer text-[13px] [transition:all_0.2s_ease] [&:hover]:bg-sky-700"
-                  >
-                    Đặt lịch dịch vụ
-                  </button>
-                </div>
+    <section aria-labelledby="home-services-title">
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div><p className="mb-2 text-xs font-bold uppercase tracking-widest text-teal-600">Chăm sóc phù hợp với bạn</p><h2 id="home-services-title" className="text-2xl font-bold text-slate-900 sm:text-3xl">Dịch vụ nha khoa</h2><p className="mt-2 text-sm leading-6 text-slate-500">Tìm hiểu dịch vụ và chi phí trước khi đặt lịch thăm khám.</p></div>
+        <Link to="/dich-vu" className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-sky-600 hover:text-sky-700">Xem tất cả dịch vụ<ArrowRight size={17}/></Link>
+      </div>
+      {home.loading ? <p role="status" className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">Đang tải danh mục dịch vụ...</p> : !home.services.length ? <p className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">Danh mục dịch vụ đang được cập nhật. Vui lòng liên hệ phòng khám để được tư vấn.</p> : <>
+        <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 xl:grid-cols-4" aria-live="polite">
+          {home.visibleServices.map(service => <article key={service.IdDichVu} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <MediaImage src={service.HinhAnh} alt={service.TenDichVu} className="aspect-video w-full" fallback={<Stethoscope size={36}/>}/>
+            <div className="flex flex-1 flex-col p-5"><h3 className="min-h-14 text-lg font-bold leading-7 text-slate-900">{service.TenDichVu}</h3><p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{service.MoTa || 'Liên hệ phòng khám để được tư vấn chi tiết về dịch vụ.'}</p>
+              <div className="mt-auto pt-5"><div className="mb-4 border-t border-slate-100 pt-4"><p className="text-xs text-slate-500">Chi phí tham khảo</p><p className="mt-1 break-words text-lg font-bold text-teal-600">{formatServicePrice(service.Gia)}</p></div>
+                {home.canBook ? <button type="button" onClick={() => home.handleBooking(`Đăng ký dịch vụ: ${service.TenDichVu}`)} className="w-full rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">Đặt lịch dịch vụ</button> : <Link to="/dich-vu" className="block rounded-xl bg-sky-50 px-4 py-2.5 text-center text-sm font-semibold text-sky-600 hover:bg-sky-100">Xem dịch vụ</Link>}
               </div>
-            ))}
-          </div>
-
-          {totalSlides > 1 && (
-            <button
-              onClick={handleNextService}
-              className="absolute [top:50%] [transform:translateY(-50%)] [z-index:10] w-12 h-12 shrink-0 rounded-full flex items-center justify-center bg-white [border:1px_solid_#cbd5e1] text-sky-600 cursor-pointer [box-shadow:0_4px_6px_-1px_rgba(0,_0,_0,_0.1)] [transition:all_0.2s_ease] [&:hover:not(:disabled)]:bg-sky-600 [&:hover:not(:disabled)]:text-white [&:hover:not(:disabled)]:border-sky-600 [&:hover:not(:disabled)]:[transform:translateY(-50%)_scale(1.08)] [&:disabled]:[opacity:0.25] [&:disabled]:cursor-not-allowed [&:disabled]:[box-shadow:none] max-[640.01px]:w-9 max-[640.01px]:h-9 [right:0]"
-              title="Dịch vụ kế tiếp"
-            >
-              <ChevronRight size={22} />
-            </button>
-          )}
-        </div>
-      </section>
-
-      {/* 4. Giới Thiệu Phòng Khám & Ứng Dụng AI */}
-      <section className="p-9 bg-white grid grid-cols-[1fr_1fr] gap-[30px] items-center rounded-[12px] [border:1px_solid_#e2e8f0] [box-shadow:0_4px_10px_rgba(15,_23,_42,_0.04)] max-[1024.01px]:gap-5 max-[1024.01px]:p-7 max-[900.01px]:grid-cols-[1fr] max-[640.01px]:[padding:24px_18px]">
-        <div>
-          <span className="text-sky-600 font-bold text-[14px] uppercase">Giới thiệu phòng khám</span>
-          <h2 className="text-[26px] text-slate-900 [margin:8px_0_16px] leading-[1.3] max-[640.01px]:text-[23px]">
-            Nha Khoa Đức Tín — Chăm Sóc Nụ Cười Việt
-          </h2>
-          <p className="text-slate-600 text-[14px] leading-[1.7] mb-4">
-            Tọa lạc tại vị trí đắc địa ở thành phố Đà Nẵng, phòng khám Nha khoa
-            Đức Tín cung cấp đầy đủ các dịch vụ từ kiểm tra tổng quát, điều trị
-            nha khoa tới thẩm mỹ nụ cười.
-          </p>
-          <p className="text-slate-600 text-[14px] leading-[1.7] mb-4">
-            Hệ thống tích hợp <strong>Trợ lý AI</strong> tiên tiến giúp tổng hợp
-            tiền sử bệnh lý, cảnh báo sớm các dấu hiệu bất thường, hỗ trợ các
-            bác sĩ đưa ra phác đồ điều trị tối ưu nhất.
-          </p>
-
-          <div className="flex flex-col gap-[10px] text-[14px] text-slate-700">
-            <div className="flex items-start gap-2 leading-[1.6] [&_svg]:shrink-0 [&_svg]:mt-[2px]">
-              <MapPin size={18} color="#0284c7" /> Địa chỉ: 54 Nguyễn Lương
-              Bằng, Hòa Khánh Bắc, Liên Chiểu, Đà Nẵng
             </div>
-            <div className="flex items-start gap-2 leading-[1.6] [&_svg]:shrink-0 [&_svg]:mt-[2px]">
-              <Clock size={18} color="#0284c7" /> Mở cửa: 08:00 AM – 08:00 PM
-              (Từ thứ 2 đến Chủ Nhật)
-            </div>
-          </div>
+          </article>)}
         </div>
+        {home.totalSlides > 1 && <div className="mt-6 flex items-center justify-center gap-4"><button type="button" onClick={home.previousServices} aria-label="Dịch vụ trước" className="rounded-full border border-slate-200 bg-white p-2.5 text-sky-600 hover:bg-sky-50"><ChevronLeft size={20}/></button><span className="text-sm text-slate-500">{home.currentSlide + 1} / {home.totalSlides}</span><button type="button" onClick={home.nextServices} aria-label="Dịch vụ tiếp theo" className="rounded-full border border-slate-200 bg-white p-2.5 text-sky-600 hover:bg-sky-50"><ChevronRight size={20}/></button></div>}
+      </>}
+    </section>
 
-        <div className="bg-slate-50 p-[30px] rounded-[16px] [border:1px_solid_#e2e8f0] text-center max-[640.01px]:[padding:24px_18px]">
-          <div className="w-15 h-15 bg-teal-100 rounded-full flex items-center justify-center [margin:0_auto_16px]">
-            <Sparkles size={32} color="#0d9488" />
-          </div>
-          <h3 className="text-[20px] text-slate-900 [margin:0_0_10px]">Trợ Lý AI Phân Tích Bệnh Án</h3>
-          <p className="text-slate-500 text-[14px] leading-[1.6] mb-5">
-            Tự động tóm tắt tiền sử bệnh án, phân tích sinh hiệu lâm sàng và đưa
-            ra cảnh báo sớm hỗ trợ bác sĩ chuyên khoa.
-          </p>
-          <div className="text-teal-600 font-semibold text-[14px]">
-            (Tính năng lâm sàng dành cho Bác sĩ & Y tá)
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+    <section className="grid gap-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:grid-cols-2 lg:gap-12 lg:p-10">
+      <div><p className="text-xs font-bold uppercase tracking-widest text-sky-600">Giới thiệu phòng khám</p><h2 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">{clinic.name}</h2><p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">{clinic.description}</p>
+        <dl className="mt-6 space-y-4 text-sm text-slate-600"><div className="flex gap-3"><MapPin size={18} className="mt-1 shrink-0 text-sky-600"/><div><dt className="font-semibold text-slate-900">Địa chỉ</dt><dd className="mt-1 leading-6">{clinic.address}</dd></div></div><div className="flex gap-3"><Clock size={18} className="shrink-0 text-sky-600"/><div><dt className="font-semibold text-slate-900">Giờ làm việc</dt><dd className="mt-1">{clinic.hours}</dd></div></div><div className="flex gap-3"><PhoneCall size={18} className="shrink-0 text-sky-600"/><div><dt className="font-semibold text-slate-900">Hotline</dt><dd className="mt-1"><a href={`tel:${clinic.phone}`} className="hover:text-sky-600">{clinic.phone}</a></dd></div></div></dl>
+        {home.canBook && <button type="button" onClick={() => home.handleBooking()} className="mt-7 inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-700">Đặt lịch khám<ArrowRight size={17}/></button>}
+      </div>
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-7"><span className="inline-flex rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-700">Dễ dàng trong 3 bước</span><h3 className="mt-4 text-xl font-bold text-slate-900">Quy trình chăm sóc & Đặt lịch</h3>
+        <ol className="mt-6 space-y-6">{careSteps.map((step, index) => <li key={step.title} className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-base font-bold text-white">{index + 1}</span><div><h4 className="flex items-start gap-2 font-semibold text-slate-900"><step.icon size={18} className="mt-0.5 shrink-0 text-teal-600"/>{step.title}</h4><p className="mt-2 text-sm leading-6 text-slate-500">{step.description}</p></div></li>)}</ol>
+      </div>
+    </section>
+
+    {!!home.events.length && <section aria-labelledby="home-events-title"><div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-teal-600"><Tag size={15}/>Dành cho bạn</p><h2 id="home-events-title" className="text-2xl font-bold text-slate-900">Chương trình ưu đãi & Sự kiện</h2></div><Link to="/su-kien" className="inline-flex items-center gap-2 text-sm font-semibold text-sky-600 hover:text-sky-700">Xem tất cả sự kiện<ArrowRight size={17}/></Link></div>
+      <div className="space-y-4">{home.events.slice(0, 3).map(event => {
+        const start = formatDateTime(event.ThoiGianBatDau);
+        const end = formatDateTime(event.ThoiGianKetThuc);
+        return <PublicEventCard key={event.IdSuKien} event={event} timeLabel={start && end ? `Từ ${start} đến ${end}` : start ? `Từ ${start}` : end ? `Đến ${end}` : 'Liên hệ để biết thời gian áp dụng'} actionLabel={home.canBook ? 'Nhận ưu đãi ngay' : 'Xem sự kiện'} onAction={() => home.handleEvent(event.TieuDe)}/>;
+      })}</div>
+    </section>}
+  </div>;
 }

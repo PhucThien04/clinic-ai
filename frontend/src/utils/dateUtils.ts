@@ -1,3 +1,11 @@
+export const formatClinicHours = (open?: string|null, close?: string|null) => {
+  const time = (value: string|null|undefined, fallback: string) => {
+    const match = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/.exec(value?.trim() || '');
+    return match ? match[0].slice(0, 5) : fallback;
+  };
+  return `${time(open, '08:00')} - ${time(close, '20:00')}`;
+};
+
 export const formatDate = (dateStr?: string) => {
   if (!dateStr) return "";
   // Ngày lịch không phải thời điểm UTC: không chuyển qua Date/múi giờ.
