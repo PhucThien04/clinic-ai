@@ -1,4 +1,4 @@
-# Clinic AI — Đặc tả Kỹ thuật & Nghiệp vụ Dự án (Single Source of Truth)
+﻿# Clinic AI — Đặc tả Kỹ thuật & Nghiệp vụ Dự án (Single Source of Truth)
 
 **Phiên bản:** 3.0 (Trợ lý AI lâm sàng FastAPI)
 
@@ -86,19 +86,20 @@ Hệ thống gồm **7 tác nhân** với phân quyền chặt chẽ ở Backend
 ## 4. Kiến trúc & Công nghệ Hệ thống
 
 ```text
-React Frontend trên host (TypeScript + Vite + Tailwind CSS v4)
+frontend (Vite :5173, TypeScript + Tailwind CSS v4)
        │ REST API (JSON + JWT)
        ▼
-Node.js / Express Backend trên host ── HTTP ── Python / FastAPI (:8000)
+backend (Express :5000) ── HTTP ── ai-service (FastAPI :8000)
        │                                           │
        ▼                                           ▼
-PostgreSQL 15 trong Docker                   External AI API (cấu hình qua .env)
+db (PostgreSQL 15 :5432)                      External AI API (cấu hình qua .env)
 ```
 
 - **Frontend:** React 19, TypeScript 7 cho compiler (`@typescript/native` alias) và TypeScript 6 API cho ESLint (`typescript` alias sang `@typescript/typescript6`), Vite 8, React Router, Axios, Lucide React và **Tailwind CSS v4**. `@tailwindcss/vite` được đăng ký trong `frontend/vite.config.ts`; entry CSS là `frontend/src/index.css` với `@import "tailwindcss";`.
 - **Backend:** Node.js, Express 5, `pg`, JWT (`jsonwebtoken`), bcrypt, dotenv và nodemon. Backend xử lý nghiệp vụ, kiểm tra quyền và truy cập PostgreSQL qua `backend/src/config/db.js`.
 - **AI Service đã triển khai:** Python 3.11+ / FastAPI, Pydantic v2, httpx, python-dotenv; cổng 8000. Nhận JSON từ Backend, tính rule-based và gọi Gemini/OpenAI-compatible; không có driver DB, không truy cập PostgreSQL. Thiếu key/lỗi provider trả tổng hợp an toàn HTTP 200.
-- **Database:** PostgreSQL 15 trong Docker, image `postgres:15`. Môi trường đã kiểm tra có container `datn`, publish cổng host `5432`, lưu dữ liệu ở Docker volume gắn tại `/var/lib/postgresql/data`. Backend chạy trên host dùng `DB_HOST=localhost`, `DB_PORT=5432`; chưa có Dockerfile hoặc Docker Compose trong repo.
+- **Docker Compose:** Bốn service/container db, backend, frontend, ai-service trong docker-compose.yml; Dockerfile và .dockerignore nằm ở từng thư mục ứng dụng. Node dùng 22-alpine, Python dùng 3.12-slim. Chạy `docker compose up --build -d`. Backend đợi db healthy, kết nối db:5432 và ai-service:8000; frontend chạy Vite 0.0.0.0:5173. Trình duyệt host vẫn gọi localhost:5000/api.
+- **Database:** PostgreSQL 15, service db publish 5432, tái sử dụng external volume `38f4822e157da812e7944c92878531210ee60ca166140bb67c891b8b62a63e67` từ datn tại `/var/lib/postgresql/data`. Không copy/reset schema; chỉ thay vỏ container. Không chạy hai PostgreSQL cùng volume, không xóa volume. Có pg_dump/checksum cục bộ trong .local-backups/ (Git ignore). env_file giữ credentials hiện tại; POSTGRES_* fallback không đổi password/role/database đã tồn tại. Không copy secrets vào image hoặc log cấu hình đã resolve.
 
 ### 4.1. Clean Code & phân lớp Frontend
 
@@ -120,6 +121,7 @@ Sơ đồ các thư mục nguồn và tệp cấu hình chính bên dưới đ�
 
 ```text
 clinic-ai/
+├── docker-compose.yml       # db, backend, frontend, ai-service
 ├── ai-service/               # FastAPI; không kết nối DB
 │   ├── app/
 │   │   ├── __init__.py
@@ -130,6 +132,8 @@ clinic-ai/
 │   │   ├── prompts/          # __init__.py, clinical_prompt.py
 │   │   └── services/         # __init__.py, llm_service.py
 │   ├── tests/                # Cục bộ, Git ignore
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── .env.example
 │   └── requirements.txt
 ├── backend/
@@ -143,6 +147,8 @@ clinic-ai/
 │   │   └── server.js        # Entry point Backend
 │   ├── migrations/          # SQL chạy thủ công, không gắn startup
 │   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── .env.example         # Mẫu cấu hình Backend có nội dung
 │   ├── package.json
 │   └── package-lock.json
@@ -158,6 +164,8 @@ clinic-ai/
 │   │   ├── main.tsx
 │   │   └── index.css        # Entry CSS Tailwind v4
 │   ├── tests/               # Test cục bộ, được .gitignore bỏ qua
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── .gitignore
 │   ├── eslint.config.js
 │   ├── index.html
@@ -180,9 +188,9 @@ Không có `.ai-workflow/`, `database/` hoặc `docs/` trong workspace. `ai-serv
 ### 4.4. Khởi tạo môi trường Development
 
 1. Chuẩn bị Node.js **22.14+**, npm và Docker Desktop với Linux containers. Vite đang cài đặt chấp nhận Node.js `^20.19.0 || >=22.12.0`; mốc 22.14+ cũng đáp ứng utility test. Python 3.11+ cần cho AI Service (môi trường kiểm thử 3.13).
-2. Kiểm tra container PostgreSQL bằng `docker ps -a`; nếu container `datn` đã có nhưng dừng, dùng `docker start datn`. Kiểm tra sẵn sàng bằng `docker exec datn pg_isready -U postgres -d clinic_duc_tin`. Hướng dẫn tạo container PostgreSQL 15 mới và volume riêng nằm trong [README, mục 4.1](./README.md#41-postgresql-qua-docker).
+2. Với Compose 2.24+, chạy `docker compose up --build -d` từ gốc. Kiểm tra `docker compose ps` và `docker exec db pg_isready -U postgres -d clinic_duc_tin`. Volume external phải có sẵn; máy khác cần phục hồi volume/schema từ backup trước, không tự khởi tạo volume rỗng thay thế dữ liệu hiện tại. Hướng dẫn tại [README](./README.md#chạy-bằng-docker-compose).
 3. Container mới chỉ tạo database rỗng, không tự tạo 11 bảng. Repo chưa có SQL bootstrap/seed; có migration thủ công riêng cho nội dung AI. Với môi trường mới, nhập schema/dump theo mục 5; ba cột ảnh và `ThoiDiemCapNhat` của 5 bảng TAIKHOAN/SUKIEN/DICHVU/LICHLAMVIEC/LICHDAT phải có sẵn. Backend khởi động bằng app.listen trực tiếp, không chạy ALTER TABLE, CREATE FUNCTION/TRIGGER hoặc sửa schema trong request. TIENSUBENH.IdChiTietLD phải nullable theo đặc tả; đã bỏ fallback tự DROP NOT NULL. Integration test clone schema hiện có và không gọi DDL từ mã ứng dụng.
-4. Nếu chưa có `backend/.env`, sao chép `backend/.env.example` vào đó rồi điền `PORT`, `DB_USER`, `DB_HOST`, `DB_NAME`, `DB_PASSWORD`, `DB_PORT`, `JWT_SECRET`. Mặc định database `clinic_duc_tin`; mật khẩu phải khớp cấu hình PostgreSQL. Chạy Backend từ `backend/` để dotenv đọc đúng tệp. Nếu sau này Backend chạy trong Docker, dùng tên dịch vụ/container DB trên cùng network làm `DB_HOST`.
+4. Nếu chưa có backend/.env, sao chép backend/.env.example rồi điền credentials và JWT_SECRET. Không ghi đè .env hiện có. Compose dùng env_file.required=false nhưng nghiệp vụ vẫn cần credentials đúng; ghi đè PORT=5000, DB_HOST=db, DB_PORT=5432 và AI_SERVICE_URL=http://ai-service:8000. Host dùng DB_HOST=localhost. Không sửa schema hoặc logic nghiệp vụ để container hóa.
 5. Tại `backend/`, chạy `npm ci` rồi `npm run dev` (Express `http://localhost:5000`). Tại terminal khác trong `frontend/`, chạy `npm ci` rồi `npm run dev` (Vite thường `http://localhost:5173`). Axios hiện dùng `http://localhost:5000/api`.
 6. Trong `ai-service/`: `python -m venv .venv`, `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`; nếu chưa có .env thì sao chép `.env.example`. Chạy `.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000`. Trên Linux/macOS dùng `.venv/bin/python`. Backend cần AI_SERVICE_URL (mặc định http://localhost:8000) và AI_SERVICE_TIMEOUT_MS (25000). Không ghi đè .env hiện có; trên PowerShell chặn npm.ps1 dùng npm.cmd.
 
