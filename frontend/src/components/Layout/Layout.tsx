@@ -42,11 +42,10 @@ export default function Layout({children}: {children: ReactNode}) {
           {workspace && <><span aria-hidden="true" className="mx-1 hidden h-5 w-px shrink-0 bg-slate-200 lg:block"/><Link to={workspace.path} className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-2 text-sm font-semibold transition lg:text-xs xl:px-3 xl:text-sm ${location.pathname.startsWith(workspace.path) ? 'border-teal-600 bg-teal-600 text-white' : 'border-teal-200 bg-teal-50 text-teal-700 hover:border-teal-600 hover:bg-teal-600 hover:text-white'}`}><WorkspaceIcon size={16}/>{workspace.label}</Link></>}
         </nav>
         <div className="flex shrink-0 items-center gap-2 whitespace-nowrap border-t border-slate-200 pt-3 lg:border-0 lg:pt-0">
-          {canBook && <Link to={bookingPath} className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-teal-700 sm:px-4"><Calendar size={17}/><span>Đặt lịch khám</span></Link>}
           {user ? <>
             <Link to="/profile" aria-label="Hồ sơ cá nhân" title={`${user.HoTen} (${user.VaiTro})`} className="inline-flex items-center gap-2 rounded-full px-1 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"><UserAvatar src={user.AnhDaiDien} name={user.HoTen} className="h-8 w-8"/><span className="hidden text-left 2xl:block"><span className="block max-w-28 truncate">{user.HoTen}</span><span className="block text-xs font-normal text-slate-500">{user.VaiTro}</span></span></Link>
-            <button type="button" aria-label="Đăng xuất" onClick={() => {authService.logout(); navigate('/login');}} className="inline-flex items-center gap-1.5 rounded-lg p-2 text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600"><LogOut size={18}/><span className="hidden xl:inline">Đăng xuất</span></button>
             <NotificationBell/>
+            <button type="button" aria-label="Đăng xuất" onClick={() => {authService.logout(); navigate('/login');}} className="inline-flex items-center gap-1.5 rounded-lg p-2 text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600"><LogOut size={18}/><span className="hidden xl:inline">Đăng xuất</span></button>
           </> : <Link to="/login" className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2.5 text-sm font-semibold text-sky-600 hover:bg-sky-50"><LogIn size={17}/><span className="hidden sm:inline">Đăng nhập</span></Link>}
         </div>
         </div>
