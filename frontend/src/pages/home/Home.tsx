@@ -1,16 +1,10 @@
 import {Link} from 'react-router-dom';
-import {ArrowRight, CalendarDays, ChevronLeft, ChevronRight, ClipboardList, Clock, Heart, MapPin, PhoneCall, Stethoscope, Tag} from 'lucide-react';
+import {ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock, Heart, MapPin, PhoneCall, Stethoscope, Tag} from 'lucide-react';
 import {PublicEventCard} from '../../components/management/PublicEventCard';
 import {MediaImage} from '../../components/management/MediaImage';
 import {useHome} from '../../hooks/useHome';
 import {formatDateTime} from '../../utils/dateUtils';
 import {formatServicePrice, getClinicDisplay} from '../../utils/clinicDisplay';
-
-const careSteps = [
-  {title: 'Đặt lịch trực tuyến chủ động', description: 'Chọn dịch vụ, khung giờ và hồ sơ của bạn hoặc người thân để gửi yêu cầu đặt lịch.', icon: CalendarDays},
-  {title: 'Thăm khám & Tư vấn chuyên sâu', description: 'Trao đổi nhu cầu, thăm khám trực tiếp và cùng bác sĩ tìm hướng chăm sóc phù hợp.', icon: Stethoscope},
-  {title: 'Theo dõi hồ sơ & Lịch sử điều trị', description: 'Xem lại thông tin các lượt khám và chủ động theo dõi quá trình chăm sóc răng miệng.', icon: ClipboardList},
-];
 
 export default function Home() {
   const home = useHome();
@@ -18,18 +12,18 @@ export default function Home() {
   return <div className="space-y-14 sm:space-y-16">
     <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-sky-600 to-teal-600 px-6 py-10 text-white shadow-xl shadow-sky-600/15 sm:p-10 lg:p-12">
       <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-32 h-96 w-96 rounded-full border-40 border-white/5"/>
-      <div className="relative grid items-center gap-10 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+      <div className="relative grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="min-w-0">
           <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold"><Heart size={15}/>Chăm sóc nụ cười, đồng hành cùng bạn</span>
           <p className="mb-3 text-sm font-semibold tracking-wide text-sky-100">{clinic.name}</p>
           <h1 className="max-w-2xl text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">Nụ cười khỏe mạnh.<br/>An tâm mỗi lần thăm khám.</h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-sky-50">Chủ động đặt lịch cho bạn và người thân, tìm hiểu dịch vụ phù hợp và theo dõi hồ sơ khám trong một không gian thuận tiện.</p>
+          <p className="mt-5 max-w-xl text-base leading-7 text-sky-50">{clinic.description}</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {home.canBook && <button type="button" onClick={() => home.handleBooking()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-bold text-sky-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-sky-50"><CalendarDays size={19}/>Đặt lịch khám ngay</button>}
             <Link to="/dich-vu" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20">Khám phá dịch vụ<ArrowRight size={18}/></Link>
           </div>
         </div>
-        <div className="rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm lg:col-span-2">
+        <div className="min-w-0 rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm">
           <div className="mb-6 flex items-center gap-3"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-sky-600"><PhoneCall size={23}/></span><div className="min-w-0"><p className="text-sm text-sky-100">Liên hệ phòng khám</p><a href={`tel:${clinic.phone}`} className="break-words text-2xl font-bold text-white">{clinic.phone}</a></div></div>
           <div className="space-y-4 border-t border-white/20 pt-5 text-sm">
             <p className="flex items-start gap-3"><Clock size={18} className="shrink-0"/><span><span className="block text-sky-100">Giờ làm việc</span><strong className="mt-1 block text-base">{clinic.hours}</strong></span></p>
@@ -60,16 +54,6 @@ export default function Home() {
         </div>
         {home.totalSlides > 1 && <div className="mt-6 flex items-center justify-center gap-4"><button type="button" onClick={home.previousServices} aria-label="Dịch vụ trước" className="rounded-full border border-slate-200 bg-white p-2.5 text-sky-600 hover:bg-sky-50"><ChevronLeft size={20}/></button><span className="text-sm text-slate-500">{home.currentSlide + 1} / {home.totalSlides}</span><button type="button" onClick={home.nextServices} aria-label="Dịch vụ tiếp theo" className="rounded-full border border-slate-200 bg-white p-2.5 text-sky-600 hover:bg-sky-50"><ChevronRight size={20}/></button></div>}
       </>}
-    </section>
-
-    <section className="grid gap-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:grid-cols-2 lg:gap-12 lg:p-10">
-      <div><p className="text-xs font-bold uppercase tracking-widest text-sky-600">Giới thiệu phòng khám</p><h2 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">{clinic.name}</h2><p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">{clinic.description}</p>
-        <dl className="mt-6 space-y-4 text-sm text-slate-600"><div className="flex gap-3"><MapPin size={18} className="mt-1 shrink-0 text-sky-600"/><div><dt className="font-semibold text-slate-900">Địa chỉ</dt><dd className="mt-1 leading-6">{clinic.address}</dd></div></div><div className="flex gap-3"><Clock size={18} className="shrink-0 text-sky-600"/><div><dt className="font-semibold text-slate-900">Giờ làm việc</dt><dd className="mt-1">{clinic.hours}</dd></div></div><div className="flex gap-3"><PhoneCall size={18} className="shrink-0 text-sky-600"/><div><dt className="font-semibold text-slate-900">Hotline</dt><dd className="mt-1"><a href={`tel:${clinic.phone}`} className="hover:text-sky-600">{clinic.phone}</a></dd></div></div></dl>
-        {home.canBook && <button type="button" onClick={() => home.handleBooking()} className="mt-7 inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-700">Đặt lịch khám<ArrowRight size={17}/></button>}
-      </div>
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-7"><span className="inline-flex rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-700">Dễ dàng trong 3 bước</span><h3 className="mt-4 text-xl font-bold text-slate-900">Quy trình chăm sóc & Đặt lịch</h3>
-        <ol className="mt-6 space-y-6">{careSteps.map((step, index) => <li key={step.title} className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-base font-bold text-white">{index + 1}</span><div><h4 className="flex items-start gap-2 font-semibold text-slate-900"><step.icon size={18} className="mt-0.5 shrink-0 text-teal-600"/>{step.title}</h4><p className="mt-2 text-sm leading-6 text-slate-500">{step.description}</p></div></li>)}</ol>
-      </div>
     </section>
 
     {!!home.events.length && <section aria-labelledby="home-events-title"><div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-teal-600"><Tag size={15}/>Dành cho bạn</p><h2 id="home-events-title" className="text-2xl font-bold text-slate-900">Chương trình ưu đãi & Sự kiện</h2></div><Link to="/su-kien" className="inline-flex items-center gap-2 text-sm font-semibold text-sky-600 hover:text-sky-700">Xem tất cả sự kiện<ArrowRight size={17}/></Link></div>
